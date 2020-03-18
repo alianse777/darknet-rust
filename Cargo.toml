@@ -8,3 +8,4 @@ edition = "2018"
 
 [dependencies]
 darknet-sys = {path = "../darknet-sys"}
+image = "0.23.1"
