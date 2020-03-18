@@ -4,3 +4,5 @@ Currently lacks training functionality as it usually done in python. (PRs are we
 
 Features:
 - [image](https://crates.io/crates/image) crate integration.
+
+Put 'data' directory with your project if you plan to use Detections::draw_on_image method.
