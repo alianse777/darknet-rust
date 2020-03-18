@@ -1,11 +1,10 @@
 use crate::image::Image;
-use crate::network::Alphabet;
 use darknet_sys as sys;
 pub use darknet_sys::box_ as BBox;
 use std::ffi::CString;
 use std::iter::Iterator;
 use std::mem;
-use std::os::raw::{c_char, c_int};
+use std::os::raw::c_char;
 use std::sync::Arc;
 
 fn get_max_prob_label(labels: &Vec<String>, det: &sys::detection) -> (String, f32) {

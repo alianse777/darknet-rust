@@ -1,16 +1,14 @@
 use crate::detections::Detections;
 use crate::image::Image;
 use darknet_sys as sys;
-use std::error::Error;
-use std::ffi::{CStr, CString};
+use std::ffi::CString;
 use std::fs;
 use std::io;
-use std::os::raw::{c_char, c_int};
-use std::path::Path;
+use std::os::raw::c_int;
 use std::ptr;
 use std::sync::Arc;
 
-pub type Alphabet = Box<*mut sys::image>;
+//pub type Alphabet = Box<*mut sys::image>;
 
 /// Reads file line-by-line and returns vector of strings.
 /// Useful for loading object labels from file.
