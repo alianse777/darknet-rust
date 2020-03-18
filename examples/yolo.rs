@@ -1,4 +1,4 @@
-use darknet::{load_labels, Image, Network, IMTYPE_JPG};
+use darknet::{load_labels, Image, Network};
 use std::fs;
 
 fn main() {
@@ -11,7 +11,7 @@ fn main() {
         object_labels.clone(),
     )
     .unwrap();
-    let mut img = Image::open("./darknet/data/person.jpg");
+    let mut img = Image::open("./darknet/data/person.jpg").unwrap();
     // Run object detection
     let detections = net.predict(&mut img, 0.45, 0.3);
     // Print which objects where found
@@ -19,9 +19,9 @@ fn main() {
     // Save detected objects as separate images
     fs::create_dir("./result");
     for (label, obj) in detections.crop_from(&img) {
-        obj.save_image_options(&format!("./result/{}", label), IMTYPE_JPG);
+        obj.save(&format!("./result/{}.jpg", label));
     }
     // Annotate image with object labels and bboxes
     detections.draw_on_image(&mut img);
-    img.show_image("IMG");
+    img.show("IMG");
 }
