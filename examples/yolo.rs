@@ -19,7 +19,7 @@ fn main() {
     // Save detected objects as separate images
     fs::create_dir("./result");
     for (label, obj) in detections.crop_from(&img) {
-        obj.save(&format!("./result/{}.jpg", label));
+        obj.save(&format!("./result/{}.jpg", label)).unwrap();
     }
     // Annotate image with object labels and bboxes
     detections.draw_on_image(&mut img);
