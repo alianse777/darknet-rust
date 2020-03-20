@@ -1,12 +1,13 @@
 [package]
 name = "darknet"
-version = "0.1.0"
+version = "0.1.1"
 authors = ["alianse77"]
 edition = "2018"
 description = "A Rust wrapper for Darknet, an open source neural network framework written in C and CUDA."
 repository = "https://github.com/alianse777/darknet-rust"
 license = "MIT"
 keywords = ["darknet", "machine-learning", "deep-learning", "neural-networks", "yolo"]
+readme = "./README.md"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
