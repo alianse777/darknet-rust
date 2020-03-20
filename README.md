@@ -38,3 +38,5 @@ fn main() {
     img.show("IMG");
 }
 ```
+
+You can download .weights files here: (https://pjreddie.com/darknet/yolo/)
