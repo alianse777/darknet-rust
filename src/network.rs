@@ -5,10 +5,22 @@ use std::ffi::CString;
 use std::fs;
 use std::io;
 use std::os::raw::c_int;
+use std::path::Path;
 use std::ptr;
 use std::sync::Arc;
 
 //pub type Alphabet = Box<*mut sys::image>;
+
+#[cfg(unix)]
+fn path_to_bytes<P: AsRef<Path>>(path: P) -> Vec<u8> {
+    use std::os::unix::ffi::OsStrExt;
+    path.as_ref().as_os_str().as_bytes().to_vec()
+}
+
+#[cfg(not(unix))]
+fn path_to_bytes<P: AsRef<Path>>(path: P) -> Vec<u8> {
+    path.as_ref().to_string_lossy().to_string().into_bytes()
+}
 
 /// Reads file line-by-line and returns vector of strings.
 /// Useful for loading object labels from file.
@@ -28,20 +40,20 @@ impl Network {
     /// Load network from config file `cfg` (under cfg/ subdir) and weights file  `weights` (can be obtained from https://pjreddie.com/darknet/, optional if training).
     /// <br>`clear` - Reset network data (used for training).
     /// <br>`labels` - vector of object labels the model was trained on (i.e. vec!["car", "bird", "dog"...]).
-    pub fn load(
-        cfg: &str,
-        weights: Option<&str>,
+    pub fn load<C: AsRef<Path> + ?Sized, W: AsRef<Path> + ?Sized>(
+        cfg: &C,
+        weights: Option<&W>,
         clear: bool,
         labels: Vec<String>,
     ) -> Option<Network> {
         let raw_weights = match weights {
-            Some(w) => CString::new(w)
+            Some(w) => CString::new(path_to_bytes(w))
                 .expect("CString::new(weights_file) failed")
                 .into_raw(),
             None => ptr::null_mut(),
         };
         unsafe {
-            let raw_cfg = CString::new(cfg)
+            let raw_cfg = CString::new(path_to_bytes(cfg))
                 .expect("CString::new(config_file) failed")
                 .into_raw();
             let net = sys::load_network(raw_cfg, raw_weights, clear as c_int);
