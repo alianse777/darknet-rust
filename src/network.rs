@@ -34,20 +34,19 @@ impl Network {
         clear: bool,
         labels: Vec<String>,
     ) -> Option<Network> {
-        let weights = match weights {
+        let raw_weights = match weights {
             Some(w) => CString::new(w)
                 .expect("CString::new(weights_file) failed")
                 .into_raw(),
             None => ptr::null_mut(),
         };
         unsafe {
-            let net = sys::load_network(
-                CString::new(cfg)
-                    .expect("CString::new(config_file) failed")
-                    .into_raw(),
-                weights,
-                clear as c_int,
-            );
+            let raw_cfg = CString::new(cfg)
+                .expect("CString::new(config_file) failed")
+                .into_raw();
+            let net = sys::load_network(raw_cfg, raw_weights, clear as c_int);
+            let _ = CString::from_raw(raw_cfg);
+            let _ = CString::from_raw(raw_weights);
             if net != ptr::null_mut() {
                 sys::set_batch_network(net, 1);
                 return Some(Network {
