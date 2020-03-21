@@ -4,6 +4,7 @@ use image::{error, open, ImageBuffer, RgbImage};
 use std::ffi::CString;
 use std::mem;
 use std::os::raw::c_int;
+use std::path::Path;
 use std::slice;
 
 pub struct Image {
@@ -44,7 +45,7 @@ impl Image {
     }
 
     /// Open image from file.
-    pub fn open(filename: &str) -> error::ImageResult<Image> {
+    pub fn open<P: AsRef<Path> + ?Sized>(filename: &P) -> error::ImageResult<Image> {
         Ok(Image::from_image_buffer_rgb(
             open(filename)?.as_rgb8().unwrap(),
         ))
@@ -69,7 +70,7 @@ impl Image {
     }
 
     /// Save image to file.
-    pub fn save(&self, path: &str) -> error::ImageResult<()> {
+    pub fn save<P: AsRef<Path> + ?Sized>(&self, path: &P) -> error::ImageResult<()> {
         self.to_image_buffer_rgb().save(path)
     }
 
