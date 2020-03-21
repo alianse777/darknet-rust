@@ -1,6 +1,6 @@
 [package]
 name = "darknet"
-version = "0.1.1"
+version = "0.1.2"
 authors = ["alianse77"]
 edition = "2018"
 description = "A Rust wrapper for Darknet, an open source neural network framework written in C and CUDA."
