@@ -24,7 +24,7 @@ fn path_to_bytes<P: AsRef<Path>>(path: P) -> Vec<u8> {
 
 /// Reads file line-by-line and returns vector of strings.
 /// Useful for loading object labels from file.
-pub fn load_labels(file_name: &str) -> Result<Vec<String>, io::Error> {
+pub fn load_labels<P: AsRef<Path> + ?Sized>(file_name: &P) -> Result<Vec<String>, io::Error> {
     Ok(fs::read_to_string(file_name)?
         .lines()
         .map(|x| x.trim().to_string())
@@ -110,8 +110,8 @@ impl Network {
     }
 
     /// Save network weights to file
-    pub fn save_weights(&mut self, file_name: &str) {
-        let file_name = CString::new(file_name).expect("CString::new(file_name) failed");
+    pub fn save_weights<P: AsRef<Path> + ?Sized>(&mut self, file_name: &P) {
+        let file_name = CString::new(path_to_bytes(file_name)).expect("CString::new(file_name) failed");
         unsafe {
             sys::save_weights(&mut *self.net, file_name.into_raw());
         }
