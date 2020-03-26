@@ -40,3 +40,5 @@ fn main() {
 ```
 
 You can download .weights files here: (https://pjreddie.com/darknet/yolo/)
+
+<b>Version 0.1.3 fixes some serious memory cleanup bugs, so you are encouraged to upgrade.</b>
