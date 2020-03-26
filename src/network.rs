@@ -4,12 +4,12 @@ use darknet_sys as sys;
 use std::ffi::CString;
 use std::fs;
 use std::io;
+use std::mem;
 use std::os::raw::c_int;
 use std::path::Path;
 use std::ptr;
+use std::slice;
 use std::sync::Arc;
-
-//pub type Alphabet = Box<*mut sys::image>;
 
 #[cfg(unix)]
 fn path_to_bytes<P: AsRef<Path>>(path: P) -> Vec<u8> {
@@ -32,7 +32,7 @@ pub fn load_labels<P: AsRef<Path> + ?Sized>(file_name: &P) -> Result<Vec<String>
 }
 
 pub struct Network {
-    net: Box<sys::network>,
+    net: Option<Box<sys::network>>,
     labels: Arc<Vec<String>>,
 }
 
@@ -57,12 +57,12 @@ impl Network {
                 .expect("CString::new(config_file) failed")
                 .into_raw();
             let net = sys::load_network(raw_cfg, raw_weights, clear as c_int);
-            let _ = CString::from_raw(raw_cfg);
-            let _ = CString::from_raw(raw_weights);
+            mem::drop(CString::from_raw(raw_cfg));
+            mem::drop(CString::from_raw(raw_weights));
             if net != ptr::null_mut() {
                 sys::set_batch_network(net, 1);
                 return Some(Network {
-                    net: Box::from_raw(net),
+                    net: Some(Box::from_raw(net)),
                     labels: Arc::new(labels),
                 });
             } else {
@@ -73,12 +73,12 @@ impl Network {
 
     /// Network input width.
     pub fn get_w(&self) -> usize {
-        self.net.w as usize
+        self.net.as_ref().unwrap().w as usize
     }
 
     /// Network input height.
     pub fn get_h(&self) -> usize {
-        self.net.h as usize
+        self.net.as_ref().unwrap().h as usize
     }
 
     /// Predict and return object bboxes (with probability > 'thresh').
@@ -86,10 +86,10 @@ impl Network {
     pub fn predict(&mut self, image: &mut Image, thresh: f32, nms: f32) -> Detections {
         image.resize(self.get_w(), self.get_h());
         unsafe {
-            sys::network_predict(&mut *self.net, image.get_raw_data());
+            sys::network_predict(&mut (**self.net.as_mut().unwrap()), image.get_raw_data());
             let mut nboxes: c_int = 0;
             let det_ptr = sys::get_network_boxes(
-                &mut *self.net,
+                &mut (**self.net.as_mut().unwrap()),
                 1,
                 1,
                 thresh,
@@ -105,20 +105,34 @@ impl Network {
                 Vec::from_raw_parts(det_ptr, nboxes as usize, nboxes as usize),
                 &self.labels,
                 thresh,
+                slice::from_raw_parts(
+                    self.net.as_mut().unwrap().layers,
+                    (self.net.as_mut().unwrap().n) as usize,
+                )[(self.net.as_mut().unwrap().n - 1) as usize]
+                    .coords as usize,
             )
         }
     }
 
     /// Save network weights to file
     pub fn save_weights<P: AsRef<Path> + ?Sized>(&mut self, file_name: &P) {
-        let file_name = CString::new(path_to_bytes(file_name)).expect("CString::new(file_name) failed");
+        let file_name =
+            CString::new(path_to_bytes(file_name)).expect("CString::new(file_name) failed");
         unsafe {
-            sys::save_weights(&mut *self.net, file_name.into_raw());
+            sys::save_weights(&mut (**self.net.as_mut().unwrap()), file_name.into_raw());
         }
     }
 
     /// Returns vector of object labels
     pub fn get_labels(&self) -> Vec<String> {
         self.labels.as_ref().clone()
+    }
+}
+
+impl Drop for Network {
+    fn drop(&mut self) {
+        unsafe {
+            sys::free_network(Box::leak(self.net.take().unwrap()));
+        }
     }
 }

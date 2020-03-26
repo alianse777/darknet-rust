@@ -160,6 +160,12 @@ impl Clone for Image {
 
 impl Drop for Image {
     fn drop(&mut self) {
-        unsafe { sys::free_image(self.image) }
+        unsafe {
+            mem::drop(Vec::from_raw_parts(
+                self.image.data,
+                (self.image.h * self.image.w * self.image.c) as usize,
+                (self.image.h * self.image.w * self.image.c) as usize,
+            ));
+        }
     }
 }

@@ -5,6 +5,7 @@ use std::ffi::CString;
 use std::iter::Iterator;
 use std::mem;
 use std::os::raw::c_char;
+use std::ptr;
 use std::sync::Arc;
 
 fn get_max_prob_label(labels: &Vec<String>, det: &sys::detection) -> (String, f32) {
@@ -23,6 +24,7 @@ pub struct Detections {
     detections: Vec<sys::detection>,
     names: Arc<Vec<String>>,
     thresh: f32,
+    mask_size: usize,
 }
 
 impl Detections {
@@ -30,11 +32,13 @@ impl Detections {
         detections: Vec<sys::detection>,
         names: &Arc<Vec<String>>,
         thresh: f32,
+        mask_size: usize,
     ) -> Detections {
         Detections {
             detections,
             names: names.clone(),
             thresh,
+            mask_size,
         }
     }
 
@@ -96,5 +100,26 @@ impl Detections {
     /// Returns detections count
     pub fn count(&self) -> usize {
         self.detections.len()
+    }
+}
+
+impl Drop for Detections {
+    fn drop(&mut self) {
+        unsafe {
+            for d in &self.detections {
+                mem::drop(Vec::from_raw_parts(
+                    d.prob,
+                    d.classes as usize,
+                    d.classes as usize,
+                ));
+                if d.mask != ptr::null_mut() && self.mask_size > 4 {
+                    mem::drop(Vec::from_raw_parts(
+                        d.mask,
+                        self.mask_size - 4,
+                        self.mask_size - 4,
+                    ));
+                }
+            }
+        }
     }
 }
