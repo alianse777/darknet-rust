@@ -13,6 +13,8 @@ pub enum Error {
     EncodingError { reason: String },
     #[fail(display = "internal error: {:?}", reason)]
     InternalError { reason: String },
+    #[fail(display = "conversion error: {:?}", reason)]
+    ConversionError { reason: String },
 }
 
 impl From<ImageError> for Error {

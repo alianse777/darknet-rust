@@ -1,7 +1,14 @@
 use crate::{error::Error, BBox};
 use darknet_sys as sys;
 use image::{DynamicImage, ImageBuffer, Pixel};
-use std::{borrow::Cow, convert::TryFrom, ops::Deref, os::raw::c_int, path::Path, slice};
+use std::{
+    borrow::Cow,
+    convert::{TryFrom, TryInto},
+    ops::Deref,
+    os::raw::c_int,
+    path::Path,
+    slice,
+};
 
 /// The image type used by darknet.
 #[derive(Debug)]
@@ -191,6 +198,60 @@ where
 {
     fn from(buffer: ImageBuffer<P, Container>) -> Self {
         (&buffer).into()
+    }
+}
+
+impl<P> TryFrom<&Image> for ImageBuffer<P, Vec<P::Subpixel>>
+where
+    P: Pixel + 'static,
+    P::Subpixel: 'static,
+    f32: TryInto<P::Subpixel>,
+{
+    type Error = Error;
+
+    fn try_from(from: &Image) -> Result<Self, Self::Error> {
+        let (width, height, channels) = from.shape();
+        if channels != P::CHANNEL_COUNT as usize {
+            return Err(Error::ConversionError {
+                reason: format!(
+                    "cannot convert to a {} channel ImageBuffer from Image with {} channels",
+                    P::CHANNEL_COUNT,
+                    channels
+                ),
+            });
+        }
+
+        let mut image = ImageBuffer::<P, Vec<P::Subpixel>>::new(width as u32, height as u32);
+        image.enumerate_pixels_mut().for_each(|(x, y, pixel)| {
+            pixel
+                .channels_mut()
+                .iter_mut()
+                .enumerate()
+                .for_each(|(c, component)| {
+                    let value = unsafe {
+                        *from
+                            .image
+                            .data
+                            .add(c * height * width + y as usize * width + x as usize)
+                    };
+                    *component = value.try_into().ok().unwrap();
+                });
+        });
+
+        Ok(image)
+    }
+}
+
+impl<P> TryFrom<Image> for ImageBuffer<P, Vec<P::Subpixel>>
+where
+    P: Pixel + 'static,
+    P::Subpixel: 'static,
+    P::Subpixel: TryFrom<f32>,
+{
+    type Error = Error;
+
+    fn try_from(from: Image) -> Result<Self, Self::Error> {
+        Self::try_from(&from)
     }
 }
 
