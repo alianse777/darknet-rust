@@ -1,7 +1,7 @@
 use crate::{error::Error, BBox};
 use darknet_sys as sys;
 use image::{DynamicImage, ImageBuffer, Pixel};
-use std::{convert::TryFrom, ops::Deref, os::raw::c_int, path::Path, slice};
+use std::{borrow::Cow, convert::TryFrom, ops::Deref, os::raw::c_int, path::Path, slice};
 
 /// The image type used by darknet.
 #[derive(Debug)]
@@ -40,24 +40,24 @@ impl Image {
     /// Crop a bounding box from the image.
     pub fn crop_bbox(&self, bbox: &BBox) -> Image {
         let left = (bbox.x - bbox.w / 2.0) * self.image.w as f32;
-        let right = (bbox.x + bbox.w / 2.0) * self.image.w as f32;
         let top = (bbox.y - bbox.h / 2.0) * self.image.h as f32;
-        let bot = (bbox.y + bbox.h / 2.0) * self.image.h as f32;
+        let width = bbox.w * self.image.w as f32;
+        let height = bbox.h * self.image.h as f32;
         unsafe {
             Image {
                 image: sys::crop_image(
                     self.image,
                     left as c_int,
                     top as c_int,
-                    (right - left) as c_int,
-                    (bot - top) as c_int,
+                    width as c_int,
+                    height as c_int,
                 ),
             }
         }
     }
 
     /// Returns pointer to raw image data.
-    pub fn get_raw_data(&self) -> *mut f32 {
+    pub unsafe fn get_raw_data(&self) -> *mut f32 {
         self.image.data
     }
 
@@ -191,5 +191,46 @@ where
 {
     fn from(buffer: ImageBuffer<P, Container>) -> Self {
         (&buffer).into()
+    }
+}
+
+/// The traits converts input type to a copy-on-write image.
+pub trait IntoCowImage<'a> {
+    fn into_cow_image(self) -> Cow<'a, Image>;
+}
+
+impl<'a> IntoCowImage<'a> for Image {
+    fn into_cow_image(self) -> Cow<'a, Image> {
+        Cow::Owned(self)
+    }
+}
+
+impl<'a> IntoCowImage<'a> for &'a Image {
+    fn into_cow_image(self) -> Cow<'a, Image> {
+        Cow::Borrowed(self)
+    }
+}
+
+impl<'a, P, Container> IntoCowImage<'a> for &'a ImageBuffer<P, Container>
+where
+    P: Pixel + 'static,
+    P::Subpixel: 'static,
+    Container: Deref<Target = [P::Subpixel]>,
+    f32: From<P::Subpixel>,
+{
+    fn into_cow_image(self) -> Cow<'a, Image> {
+        Cow::Owned(self.into())
+    }
+}
+
+impl<'a, P, Container> IntoCowImage<'a> for ImageBuffer<P, Container>
+where
+    P: Pixel + 'static,
+    P::Subpixel: 'static,
+    Container: Deref<Target = [P::Subpixel]>,
+    f32: From<P::Subpixel>,
+{
+    fn into_cow_image(self) -> Cow<'a, Image> {
+        Cow::Owned(self.into())
     }
 }

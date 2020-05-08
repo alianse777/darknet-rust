@@ -5,8 +5,8 @@ mod kinds;
 mod layers;
 mod network;
 
-pub use crate::image::Image;
-pub use detections::Detections;
+pub use crate::image::{Image, IntoCowImage};
+pub use detections::{Detection, Detections, DetectionsIter};
 pub use error::Error;
 pub use kinds::{
     Activation, BinaryActivation, CostType, IoULoss, LayerType, NmsKind, WeightsNormalizion,

@@ -1,13 +1,13 @@
 use crate::{
     detections::Detections,
     error::Error,
-    image::Image,
+    image::IntoCowImage,
     layers::{Layer, Layers},
 };
 use darknet_sys as sys;
 
 use std::{
-    borrow::{Borrow, Cow},
+    borrow::Cow,
     ffi::{c_void, CString},
     mem,
     os::raw::c_int,
@@ -109,7 +109,7 @@ impl Network {
     }
 
     /// Run inference on an image.
-    pub fn predict<M>(
+    pub fn predict<'a, M>(
         &mut self,
         image: M,
         thresh: f32,
@@ -118,17 +118,17 @@ impl Network {
         use_letter_box: bool,
     ) -> Detections
     where
-        M: Borrow<Image>,
+        M: IntoCowImage<'a>,
     {
-        let borrow = image.borrow();
+        let cow = image.into_cow_image();
         let maybe_resized =
-            if borrow.width() == self.input_width() && borrow.height() == self.input_height() {
-                Cow::Borrowed(borrow)
+            if cow.width() == self.input_width() && cow.height() == self.input_height() {
+                cow
             } else {
                 let resized = if use_letter_box {
-                    borrow.letter_box(self.input_width(), self.input_height())
+                    cow.letter_box(self.input_width(), self.input_height())
                 } else {
-                    borrow.resize(self.input_width(), self.input_height())
+                    cow.resize(self.input_width(), self.input_height())
                 };
                 Cow::Owned(resized)
             };
