@@ -4,6 +4,7 @@ use darknet_sys as sys;
 use std::{
     borrow::{Borrow, Cow},
     ffi::{c_void, CString},
+    mem,
     os::raw::c_int,
     path::Path,
     ptr::{self, NonNull},
@@ -30,6 +31,7 @@ impl Network {
         weights: Option<W>,
         clear: bool,
     ) -> Result<Network, Error> {
+        // convert paths to CString
         let weights_cstr = weights
             .map(|path| {
                 path_to_cstring(path.as_ref()).ok_or_else(|| Error::EncodingError {
@@ -43,6 +45,7 @@ impl Network {
 
         let ptr = unsafe {
             let raw_weights = weights_cstr
+                .as_ref()
                 .map(|cstr| cstr.as_ptr() as *mut _)
                 .unwrap_or(ptr::null_mut());
             sys::load_network(cfg_cstr.as_ptr() as *mut _, raw_weights, clear as c_int)
@@ -51,6 +54,10 @@ impl Network {
         let net = NonNull::new(ptr).ok_or_else(|| Error::InternalError {
             reason: "failed to load model".into(),
         })?;
+
+        // drop paths here to avoid early deallocation
+        mem::drop(cfg_cstr);
+        mem::drop(weights_cstr);
 
         Ok(Self { net })
     }
