@@ -25,7 +25,7 @@ impl<'a> Detection<'a> {
     }
 
     /// Get the output probabilities of each class.
-    pub fn prob(&self) -> &[f32] {
+    pub fn probabilities(&self) -> &[f32] {
         unsafe { slice::from_raw_parts(self.detection.prob, self.num_classes()) }
     }
 
