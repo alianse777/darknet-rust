@@ -1,6 +1,10 @@
 mod detections;
+mod error;
 mod image;
 mod network;
-pub use crate::detections::Detections;
-pub use crate::image::Image; //, IMTYPE_BMP, IMTYPE_JPG, IMTYPE_PNG, IMTYPE_TGA};
-pub use crate::network::{load_labels, Network};
+
+pub use crate::image::Image;
+pub use detections::Detections;
+pub use network::Network;
+
+pub type BBox = darknet_sys::box_;

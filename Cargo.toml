@@ -12,5 +12,7 @@ readme = "./README.md"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-darknet-sys = "0.1.0"
-image = "0.23.1"
+darknet-sys = "^0.2.0"
+image = "^0.23.1"
+libc = "^0.2.0"
+failure = "^0.1.8"

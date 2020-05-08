@@ -24,8 +24,14 @@ impl Image {
         Ok(image)
     }
 
-    /// Resize image (uses letterbox_image internally).
+    /// Resize image without keeping the ratio.
     pub fn resize(&self, w: usize, h: usize) -> Self {
+        let image = unsafe { sys::resize_image(self.image, w as c_int, h as c_int) };
+        Image { image }
+    }
+
+    /// Resize image while keeping the ratio.
+    pub fn letter_box(&self, w: usize, h: usize) -> Self {
         let image = unsafe { sys::letterbox_image(self.image, w as c_int, h as c_int) };
         Image { image }
     }
@@ -88,13 +94,18 @@ impl Image {
     pub fn channels(&self) -> usize {
         self.image.c as usize
     }
+
+    /// Image shape
+    pub fn shape(&self) -> (usize, usize, usize) {
+        (self.width(), self.height(), self.channels())
+    }
 }
 
 impl Clone for Image {
     /// Full copy of image
     fn clone(&self) -> Image {
         let sys::image { w, h, c, .. } = self.image;
-        let image = Self::empty(w as usize, h as usize, c as usize);
+        let image = Self::zeros(w as usize, h as usize, c as usize);
         let from_slice = self.get_data();
         let to_slice = image.get_data_mut();
         to_slice.copy_from_slice(from_slice);

@@ -1,138 +1,156 @@
-use crate::detections::Detections;
-use crate::image::Image;
+use crate::{detections::Detections, error::Error, image::Image};
 use darknet_sys as sys;
-use std::ffi::CString;
-use std::fs;
-use std::io;
-use std::mem;
-use std::os::raw::c_int;
-use std::path::Path;
-use std::ptr;
-use std::slice;
-use std::sync::Arc;
+
+use std::{
+    borrow::{Borrow, Cow},
+    ffi::{c_void, CString},
+    os::raw::c_int,
+    path::Path,
+    ptr::{self, NonNull},
+};
 
 #[cfg(unix)]
-fn path_to_bytes<P: AsRef<Path>>(path: P) -> Vec<u8> {
+fn path_to_cstring<'a>(path: &'a Path) -> Option<CString> {
     use std::os::unix::ffi::OsStrExt;
-    path.as_ref().as_os_str().as_bytes().to_vec()
+    Some(CString::new(path.as_os_str().as_bytes()).unwrap())
 }
 
 #[cfg(not(unix))]
-fn path_to_bytes<P: AsRef<Path>>(path: P) -> Vec<u8> {
-    path.as_ref().to_string_lossy().to_string().into_bytes()
-}
-
-/// Reads file line-by-line and returns vector of strings.
-/// Useful for loading object labels from file.
-pub fn load_labels<P: AsRef<Path> + ?Sized>(file_name: &P) -> Result<Vec<String>, io::Error> {
-    Ok(fs::read_to_string(file_name)?
-        .lines()
-        .map(|x| x.trim().to_string())
-        .collect())
+fn path_to_cstring<'a>(path: &'a Path) -> Option<CString> {
+    path.to_str().map(|s| CString::new(s.as_bytes()).unwrap())
 }
 
 pub struct Network {
-    net: Option<Box<sys::network>>,
-    labels: Arc<Vec<String>>,
+    net: NonNull<sys::network>,
 }
 
 impl Network {
-    /// Load network from config file `cfg` (under cfg/ subdir) and weights file  `weights` (can be obtained from https://pjreddie.com/darknet/, optional if training).
-    /// <br>`clear` - Reset network data (used for training).
-    /// <br>`labels` - vector of object labels the model was trained on (i.e. vec!["car", "bird", "dog"...]).
-    pub fn load<C: AsRef<Path> + ?Sized, W: AsRef<Path> + ?Sized>(
-        cfg: &C,
-        weights: Option<&W>,
+    pub fn load<C: AsRef<Path>, W: AsRef<Path>>(
+        cfg: C,
+        weights: Option<W>,
         clear: bool,
-        labels: Vec<String>,
-    ) -> Option<Network> {
-        let raw_weights = match weights {
-            Some(w) => CString::new(path_to_bytes(w))
-                .expect("CString::new(weights_file) failed")
-                .into_raw(),
-            None => ptr::null_mut(),
+    ) -> Result<Network, Error> {
+        let weights_cstr = weights
+            .map(|path| {
+                path_to_cstring(path.as_ref()).ok_or_else(|| Error::EncodingError {
+                    reason: format!("the path {} is invalid", path.as_ref().display()),
+                })
+            })
+            .transpose()?;
+        let cfg_cstr = path_to_cstring(cfg.as_ref()).ok_or_else(|| Error::EncodingError {
+            reason: format!("the path {} is invalid", cfg.as_ref().display()),
+        })?;
+
+        let ptr = unsafe {
+            let raw_weights = weights_cstr
+                .map(|cstr| cstr.as_ptr() as *mut _)
+                .unwrap_or(ptr::null_mut());
+            sys::load_network(cfg_cstr.as_ptr() as *mut _, raw_weights, clear as c_int)
         };
-        unsafe {
-            let raw_cfg = CString::new(path_to_bytes(cfg))
-                .expect("CString::new(config_file) failed")
-                .into_raw();
-            let net = sys::load_network(raw_cfg, raw_weights, clear as c_int);
-            mem::drop(CString::from_raw(raw_cfg));
-            mem::drop(CString::from_raw(raw_weights));
-            if net != ptr::null_mut() {
-                sys::set_batch_network(net, 1);
-                return Some(Network {
-                    net: Some(Box::from_raw(net)),
-                    labels: Arc::new(labels),
-                });
-            } else {
-                return None;
-            }
-        }
+
+        let net = NonNull::new(ptr).ok_or_else(|| Error::InternalError {
+            reason: "failed to load model".into(),
+        })?;
+
+        Ok(Self { net })
     }
 
     /// Network input width.
-    pub fn get_w(&self) -> usize {
-        self.net.as_ref().unwrap().w as usize
+    pub fn input_width(&self) -> usize {
+        unsafe { self.net.as_ref().w as usize }
     }
 
     /// Network input height.
-    pub fn get_h(&self) -> usize {
-        self.net.as_ref().unwrap().h as usize
+    pub fn input_height(&self) -> usize {
+        unsafe { self.net.as_ref().h as usize }
     }
 
-    /// Predict and return object bboxes (with probability > 'thresh').
-    /// <br>'nms' - overlap threshold for non-maximum suppression (higher = more overlapping allowed)
-    pub fn predict(&mut self, image: &mut Image, thresh: f32, nms: f32) -> Detections {
-        image.resize(self.get_w(), self.get_h());
+    pub fn predict<M>(
+        &mut self,
+        image: M,
+        thresh: f32,
+        hier_thres: f32,
+        nms: f32,
+        use_letter_box: bool,
+    ) -> Detections
+    where
+        M: Borrow<Image>,
+    {
+        let borrow = image.borrow();
+        let maybe_resized =
+            if borrow.width() == self.input_width() && borrow.height() == self.input_height() {
+                Cow::Borrowed(borrow)
+            } else {
+                let resized = if use_letter_box {
+                    borrow.letter_box(self.input_width(), self.input_height())
+                } else {
+                    borrow.resize(self.input_width(), self.input_height())
+                };
+                Cow::Owned(resized)
+            };
+
         unsafe {
-            sys::network_predict(&mut (**self.net.as_mut().unwrap()), image.get_raw_data());
+            let output_layer = self
+                .net
+                .as_ref()
+                .layers
+                .add(self.num_layers() - 1)
+                .as_ref()
+                .unwrap();
+
+            // run prediction
+            sys::network_predict(*self.net.as_ref(), maybe_resized.get_raw_data());
             let mut nboxes: c_int = 0;
-            let det_ptr = sys::get_network_boxes(
-                &mut (**self.net.as_mut().unwrap()),
-                1,
-                1,
+            let dets_ptr = sys::get_network_boxes(
+                self.net.as_mut(),
+                maybe_resized.width() as c_int,
+                maybe_resized.height() as c_int,
                 thresh,
-                0.0,
+                hier_thres,
                 ptr::null_mut(),
-                0,
+                1,
                 &mut nboxes,
+                use_letter_box as c_int,
             );
+            let dets = NonNull::new(dets_ptr).unwrap();
+
+            // NMS sort
             if nms != 0.0 {
-                sys::do_nms_sort(det_ptr, nboxes, self.labels.len() as i32, nms);
+                if output_layer.nms_kind == sys::NMS_KIND_DEFAULT_NMS {
+                    sys::do_nms_sort(dets.as_ptr(), nboxes, output_layer.classes, nms);
+                } else {
+                    sys::diounms_sort(
+                        dets.as_ptr(),
+                        nboxes,
+                        output_layer.classes,
+                        nms,
+                        output_layer.nms_kind,
+                        output_layer.beta_nms,
+                    );
+                }
             }
-            Detections::new(
-                Vec::from_raw_parts(det_ptr, nboxes as usize, nboxes as usize),
-                &self.labels,
-                thresh,
-                slice::from_raw_parts(
-                    self.net.as_mut().unwrap().layers,
-                    (self.net.as_mut().unwrap().n) as usize,
-                )[(self.net.as_mut().unwrap().n - 1) as usize]
-                    .coords as usize,
-            )
+
+            Detections {
+                detections: dets,
+                n_detections: nboxes as usize,
+            }
         }
     }
 
-    /// Save network weights to file
-    pub fn save_weights<P: AsRef<Path> + ?Sized>(&mut self, file_name: &P) {
-        let file_name =
-            CString::new(path_to_bytes(file_name)).expect("CString::new(file_name) failed");
-        unsafe {
-            sys::save_weights(&mut (**self.net.as_mut().unwrap()), file_name.into_raw());
-        }
-    }
-
-    /// Returns vector of object labels
-    pub fn get_labels(&self) -> Vec<String> {
-        self.labels.as_ref().clone()
+    pub fn num_layers(&self) -> usize {
+        unsafe { self.net.as_ref().n as usize }
     }
 }
 
 impl Drop for Network {
     fn drop(&mut self) {
         unsafe {
-            sys::free_network(Box::leak(self.net.take().unwrap()));
+            let ptr = self.net.as_ptr();
+            sys::free_network(*ptr);
+
+            // The network* pointer was allocated by calloc
+            // We have to deallocate it manually
+            libc::free(ptr as *mut c_void);
         }
     }
 }
