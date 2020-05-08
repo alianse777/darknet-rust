@@ -10,6 +10,74 @@ use std::{
     slice,
 };
 
+pub trait ConvertSubpixel
+where
+    Self: image::Primitive,
+{
+    fn from_subpixel(from: Self) -> f32;
+    fn to_subpixel(from: f32) -> Self;
+}
+
+impl ConvertSubpixel for u8 {
+    fn from_subpixel(from: Self) -> f32 {
+        from as f32 / u8::MAX as f32
+    }
+
+    fn to_subpixel(from: f32) -> Self {
+        (from * u8::MAX as f32) as u8
+    }
+}
+
+impl ConvertSubpixel for u16 {
+    fn from_subpixel(from: Self) -> f32 {
+        from as f32 / u16::MAX as f32
+    }
+
+    fn to_subpixel(from: f32) -> Self {
+        (from * u16::MAX as f32) as u16
+    }
+}
+
+impl ConvertSubpixel for u32 {
+    fn from_subpixel(from: Self) -> f32 {
+        from as f32 / u32::MAX as f32
+    }
+
+    fn to_subpixel(from: f32) -> Self {
+        (from * u32::MAX as f32) as u32
+    }
+}
+
+impl ConvertSubpixel for u64 {
+    fn from_subpixel(from: Self) -> f32 {
+        from as f32 / u64::MAX as f32
+    }
+
+    fn to_subpixel(from: f32) -> Self {
+        (from * u64::MAX as f32) as u64
+    }
+}
+
+impl ConvertSubpixel for f32 {
+    fn from_subpixel(from: Self) -> f32 {
+        from
+    }
+
+    fn to_subpixel(from: f32) -> Self {
+        from
+    }
+}
+
+impl ConvertSubpixel for f64 {
+    fn from_subpixel(from: Self) -> f32 {
+        from as f32
+    }
+
+    fn to_subpixel(from: f32) -> Self {
+        from as f64
+    }
+}
+
 /// The image type used by darknet.
 #[derive(Debug)]
 pub struct Image {
@@ -155,7 +223,7 @@ where
     P: Pixel + 'static,
     P::Subpixel: 'static,
     Container: Deref<Target = [P::Subpixel]>,
-    f32: From<P::Subpixel>,
+    P::Subpixel: ConvertSubpixel,
 {
     fn from(buffer: &ImageBuffer<P, Container>) -> Self {
         let w = buffer.width() as usize;
@@ -174,10 +242,10 @@ where
                     .iter()
                     .cloned()
                     .enumerate()
-                    .map(move |(c, component)| (x, y, c, component))
+                    .map(move |(c, subpixel)| (x, y, c, subpixel))
             })
-            .map(|(x, y, c, component)| {
-                let converted = f32::try_from(component).ok().unwrap();
+            .map(|(x, y, c, subpixel)| {
+                let converted = ConvertSubpixel::from_subpixel(subpixel);
                 (x as usize, y as usize, c, converted)
             })
             .for_each(|(x, y, c, component)| {
@@ -194,7 +262,7 @@ where
     P: Pixel + 'static,
     P::Subpixel: 'static,
     Container: Deref<Target = [P::Subpixel]>,
-    f32: From<P::Subpixel>,
+    P::Subpixel: ConvertSubpixel,
 {
     fn from(buffer: ImageBuffer<P, Container>) -> Self {
         (&buffer).into()
@@ -205,7 +273,7 @@ impl<P> TryFrom<&Image> for ImageBuffer<P, Vec<P::Subpixel>>
 where
     P: Pixel + 'static,
     P::Subpixel: 'static,
-    f32: TryInto<P::Subpixel>,
+    P::Subpixel: ConvertSubpixel,
 {
     type Error = Error;
 
@@ -227,14 +295,10 @@ where
                 .channels_mut()
                 .iter_mut()
                 .enumerate()
-                .for_each(|(c, component)| {
-                    let value = unsafe {
-                        *from
-                            .image
-                            .data
-                            .add(c * height * width + y as usize * width + x as usize)
-                    };
-                    *component = value.try_into().ok().unwrap();
+                .for_each(|(c, subpixel)| {
+                    let value =
+                        from.get_data()[c * height * width + y as usize * width + x as usize];
+                    *subpixel = ConvertSubpixel::to_subpixel(value);
                 });
         });
 
@@ -246,7 +310,7 @@ impl<P> TryFrom<Image> for ImageBuffer<P, Vec<P::Subpixel>>
 where
     P: Pixel + 'static,
     P::Subpixel: 'static,
-    P::Subpixel: TryFrom<f32>,
+    P::Subpixel: ConvertSubpixel,
 {
     type Error = Error;
 
@@ -277,7 +341,7 @@ where
     P: Pixel + 'static,
     P::Subpixel: 'static,
     Container: Deref<Target = [P::Subpixel]>,
-    f32: From<P::Subpixel>,
+    P::Subpixel: ConvertSubpixel,
 {
     fn into_cow_image(self) -> Cow<'a, Image> {
         Cow::Owned(self.into())
@@ -289,7 +353,7 @@ where
     P: Pixel + 'static,
     P::Subpixel: 'static,
     Container: Deref<Target = [P::Subpixel]>,
-    f32: From<P::Subpixel>,
+    P::Subpixel: ConvertSubpixel,
 {
     fn into_cow_image(self) -> Cow<'a, Image> {
         Cow::Owned(self.into())

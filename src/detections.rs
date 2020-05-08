@@ -69,11 +69,12 @@ impl Detections {
         })
     }
 
-    /// Returns detections count.
+    /// Return detections count.
     pub fn len(&self) -> usize {
         self.n_detections
     }
 
+    /// Get the iterator of a collection of detections.
     pub fn iter<'a>(&'a self) -> DetectionsIter<'a> {
         DetectionsIter {
             detections: self,
