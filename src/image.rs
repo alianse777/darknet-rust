@@ -3,6 +3,7 @@ use darknet_sys as sys;
 use image::{DynamicImage, ImageBuffer, Pixel};
 use std::{convert::TryFrom, ops::Deref, os::raw::c_int, path::Path, slice};
 
+/// The image type used by darknet.
 #[derive(Debug)]
 pub struct Image {
     pub image: sys::image,
@@ -18,25 +19,25 @@ impl Image {
         }
     }
 
-    /// Open image from file.
+    /// Open image from a file.
     pub fn open<P: AsRef<Path>>(filename: P) -> Result<Self, Error> {
         let image: Self = image::open(filename)?.into();
         Ok(image)
     }
 
-    /// Resize image without keeping the ratio.
+    /// Resize the image without keeping the ratio.
     pub fn resize(&self, w: usize, h: usize) -> Self {
         let image = unsafe { sys::resize_image(self.image, w as c_int, h as c_int) };
         Image { image }
     }
 
-    /// Resize image while keeping the ratio.
+    /// Resize the image while keeping the ratio.
     pub fn letter_box(&self, w: usize, h: usize) -> Self {
         let image = unsafe { sys::letterbox_image(self.image, w as c_int, h as c_int) };
         Image { image }
     }
 
-    /// Crop bbox from image.
+    /// Crop a bounding box from the image.
     pub fn crop_bbox(&self, bbox: &BBox) -> Image {
         let left = (bbox.x - bbox.w / 2.0) * self.image.w as f32;
         let right = (bbox.x + bbox.w / 2.0) * self.image.w as f32;
@@ -60,7 +61,7 @@ impl Image {
         self.image.data
     }
 
-    /// Returns pixel values as slice.
+    /// Returns pixel values as a slice.
     pub fn get_data<'a>(&'a self) -> &'a [f32] {
         return unsafe {
             slice::from_raw_parts(
@@ -70,7 +71,7 @@ impl Image {
         };
     }
 
-    /// Returns pixel values as slice.
+    /// Returns pixel values as a mutable slice.
     pub fn get_data_mut<'a>(&'a self) -> &'a mut [f32] {
         return unsafe {
             slice::from_raw_parts_mut(
@@ -80,29 +81,29 @@ impl Image {
         };
     }
 
-    /// Image width
+    /// Get the image width.
     pub fn width(&self) -> usize {
         self.image.w as usize
     }
 
-    /// Image height
+    /// Get the image height.
     pub fn height(&self) -> usize {
         self.image.h as usize
     }
 
-    /// Image channel
+    /// Get the image channels.
     pub fn channels(&self) -> usize {
         self.image.c as usize
     }
 
-    /// Image shape
+    /// Get the image shape tuple (width, height, channels).
     pub fn shape(&self) -> (usize, usize, usize) {
         (self.width(), self.height(), self.channels())
     }
 }
 
 impl Clone for Image {
-    /// Full copy of image
+    /// Make a deep-copy of the image.
     fn clone(&self) -> Image {
         let sys::image { w, h, c, .. } = self.image;
         let image = Self::zeros(w as usize, h as usize, c as usize);

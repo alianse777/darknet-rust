@@ -7,22 +7,26 @@ use std::{
     slice,
 };
 
+/// An instance of detection.
 #[derive(Debug)]
 pub struct Detection<'a> {
     detection: &'a sys::detection,
 }
 
 impl<'a> Detection<'a> {
+    /// Get the bounding box of the object.
     pub fn bbox(&self) -> &BBox {
         &self.detection.bbox
     }
 
-    pub fn n_classes(&self) -> usize {
+    /// Get the number of classes.
+    pub fn num_classes(&self) -> usize {
         self.detection.classes as usize
     }
 
+    /// Get the output probabilities of each class.
     pub fn prob(&self) -> &[f32] {
-        unsafe { slice::from_raw_parts(self.detection.prob, self.n_classes()) }
+        unsafe { slice::from_raw_parts(self.detection.prob, self.num_classes()) }
     }
 
     pub fn uc(&self) -> Option<&[f32]> {
@@ -34,6 +38,7 @@ impl<'a> Detection<'a> {
         }
     }
 
+    /// The the score of objectness.
     pub fn objectness(&self) -> f32 {
         self.detection.objectness
     }
@@ -43,6 +48,7 @@ impl<'a> Detection<'a> {
     }
 }
 
+/// A collection of detections.
 #[derive(Debug)]
 pub struct Detections {
     pub(crate) detections: NonNull<sys::detection>,
@@ -50,6 +56,7 @@ pub struct Detections {
 }
 
 impl Detections {
+    /// Get a detection instance by index.
     pub fn get<'a>(&'a self, index: usize) -> Option<Detection<'a>> {
         if index >= self.n_detections {
             return None;
@@ -62,7 +69,7 @@ impl Detections {
         })
     }
 
-    /// Returns detections count
+    /// Returns detections count.
     pub fn len(&self) -> usize {
         self.n_detections
     }
@@ -92,6 +99,7 @@ impl Drop for Detections {
     }
 }
 
+/// The iterator of a collection of detections.
 #[derive(Debug, Clone)]
 pub struct DetectionsIter<'a> {
     detections: &'a Detections,

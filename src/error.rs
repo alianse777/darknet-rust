@@ -2,6 +2,7 @@ use failure::Fail;
 use image::error::ImageError;
 use std::io;
 
+/// The error type for this crate.
 #[derive(Debug, Fail)]
 pub enum Error {
     #[fail(display = "image error: {:?}", _0)]

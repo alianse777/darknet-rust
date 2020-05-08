@@ -1,4 +1,9 @@
-use crate::{detections::Detections, error::Error, image::Image};
+use crate::{
+    detections::Detections,
+    error::Error,
+    image::Image,
+    layers::{Layer, Layers},
+};
 use darknet_sys as sys;
 
 use std::{
@@ -8,6 +13,7 @@ use std::{
     os::raw::c_int,
     path::Path,
     ptr::{self, NonNull},
+    slice,
 };
 
 #[cfg(unix)]
@@ -21,16 +27,18 @@ fn path_to_cstring<'a>(path: &'a Path) -> Option<CString> {
     path.to_str().map(|s| CString::new(s.as_bytes()).unwrap())
 }
 
+/// The network wrapper type for Darknet.
 pub struct Network {
     net: NonNull<sys::network>,
 }
 
 impl Network {
-    pub fn load<C: AsRef<Path>, W: AsRef<Path>>(
-        cfg: C,
-        weights: Option<W>,
-        clear: bool,
-    ) -> Result<Network, Error> {
+    /// Build the network instance from a configuration file and an optional weights file.
+    pub fn load<C, W>(cfg: C, weights: Option<W>, clear: bool) -> Result<Network, Error>
+    where
+        C: AsRef<Path>,
+        W: AsRef<Path>,
+    {
         // convert paths to CString
         let weights_cstr = weights
             .map(|path| {
@@ -62,16 +70,45 @@ impl Network {
         Ok(Self { net })
     }
 
-    /// Network input width.
+    /// Get network input width.
     pub fn input_width(&self) -> usize {
         unsafe { self.net.as_ref().w as usize }
     }
 
-    /// Network input height.
+    /// Get network input height.
     pub fn input_height(&self) -> usize {
         unsafe { self.net.as_ref().h as usize }
     }
 
+    /// Get network input shape tuple (width, height).
+    pub fn input_shape(&self) -> (usize, usize) {
+        (self.input_width(), self.input_height())
+    }
+
+    /// Get the number of layers.
+    pub fn num_layers(&self) -> usize {
+        unsafe { self.net.as_ref().n as usize }
+    }
+
+    /// Get network layers.
+    pub fn layers<'a>(&'a self) -> Layers<'a> {
+        let layers = unsafe { slice::from_raw_parts(self.net.as_ref().layers, self.num_layers()) };
+        Layers { layers }
+    }
+
+    /// Get layer by index.
+    pub fn get_layer<'a>(&'a self, index: usize) -> Option<Layer<'a>> {
+        if index >= self.num_layers() {
+            return None;
+        }
+
+        unsafe {
+            let layer = self.net.as_ref().layers.add(index).as_ref().unwrap();
+            Some(Layer { layer })
+        }
+    }
+
+    /// Run inference on an image.
     pub fn predict<M>(
         &mut self,
         image: M,
@@ -142,10 +179,6 @@ impl Network {
                 n_detections: nboxes as usize,
             }
         }
-    }
-
-    pub fn num_layers(&self) -> usize {
-        unsafe { self.net.as_ref().n as usize }
     }
 }
 
