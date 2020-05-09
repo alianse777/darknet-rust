@@ -1,6 +1,7 @@
 use darknet_sys as sys;
 use num_derive::FromPrimitive;
 
+/// Layer types.
 #[repr(usize)]
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, FromPrimitive)]
 pub enum LayerType {
@@ -43,6 +44,7 @@ pub enum LayerType {
     Deconvolutional = sys::LAYER_TYPE_DECONVOLUTIONAL as usize,
 }
 
+/// Activation types.
 #[repr(usize)]
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, FromPrimitive)]
 pub enum Activation {
@@ -69,6 +71,7 @@ pub enum Activation {
     NormChanSoftmaxMaxval = sys::ACTIVATION_NORM_CHAN_SOFTMAX_MAXVAL as usize,
 }
 
+/// Binary activation types.
 #[repr(usize)]
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, FromPrimitive)]
 pub enum BinaryActivation {
@@ -78,6 +81,7 @@ pub enum BinaryActivation {
     Mult = sys::BINARY_ACTIVATION_MULT as usize,
 }
 
+/// Cost, or namely, loss types.
 #[repr(usize)]
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, FromPrimitive)]
 pub enum CostType {
@@ -89,6 +93,7 @@ pub enum CostType {
     Smooth = sys::COST_TYPE_SMOOTH as usize,
 }
 
+/// Weights format types.
 #[repr(usize)]
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, FromPrimitive)]
 pub enum WeightsType {
@@ -97,6 +102,7 @@ pub enum WeightsType {
     PerFeature = sys::WEIGHTS_TYPE_T_PER_FEATURE as usize,
 }
 
+/// Weights normalizion types.
 #[repr(usize)]
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, FromPrimitive)]
 pub enum WeightsNormalizion {
@@ -105,6 +111,7 @@ pub enum WeightsNormalizion {
     Softmax = sys::WEIGHTS_NORMALIZATION_T_SOFTMAX_NORMALIZATION as usize,
 }
 
+/// Non-Maximum Suppression (NMS) types.
 #[repr(usize)]
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, FromPrimitive)]
 pub enum NmsKind {
@@ -114,6 +121,7 @@ pub enum NmsKind {
     Default = sys::NMS_KIND_DEFAULT_NMS as usize,
 }
 
+/// IoU loss types.
 #[repr(usize)]
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, FromPrimitive)]
 pub enum IoULoss {
@@ -124,6 +132,7 @@ pub enum IoULoss {
     GIoU = sys::IOU_LOSS_GIOU as usize,
 }
 
+/// YOLO point types.
 #[repr(usize)]
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, FromPrimitive)]
 pub enum YoloPoint {
