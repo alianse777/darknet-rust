@@ -1,27 +1,112 @@
-use darknet::{load_labels, Image, Network};
-use std::fs;
+use darknet::{BBox, Detection, Image, Network};
+use failure::Fallible;
+use image::RgbImage;
+use itertools::{izip, Itertools};
+use sha2::{Digest, Sha256};
+use std::{
+    convert::TryFrom,
+    fs::{self, File},
+    io::{prelude::*, BufReader, BufWriter},
+    path::Path,
+};
 
-fn main() {
-    // Load network & labels
-    let object_labels = load_labels("./darknet/data/coco.names").unwrap();
-    let mut net = Network::load(
-        "./darknet/cfg/yolov3-tiny.cfg",
-        Some("./yolov3-tiny.weights"),
-        false,
-        object_labels.clone(),
-    )
-    .unwrap();
-    let mut img = Image::open("./darknet/data/person.jpg").unwrap();
-    // Run object detection
-    let detections = net.predict(&mut img, 0.45, 0.3);
-    // Print which objects where found
-    println!("Found: {:?}", detections.get_labels());
-    // Save detected objects as separate images
-    fs::create_dir("./result");
-    for (label, obj) in detections.crop_from(&img) {
-        obj.save(&format!("./result/{}.jpg", label)).unwrap();
+const LABEL_PATH: &'static str = "./darknet/data/coco.names";
+const IMAGE_PATH: &'static str = "./darknet/data/person.jpg";
+const CFG_PATH: &'static str = "./darknet/cfg/yolov3-tiny.cfg";
+const WEIGHTS_URL: &'static str = "https://pjreddie.com/media/files/yolov3-tiny.weights";
+const WEIGHTS_SHA256_HASH: &'static str =
+    "dccea06f59b781ec1234ddf8d1e94b9519a97f4245748a7d4db75d5b7080a42c";
+const WEIGHTS_FILE_NAME: &'static str = "./yolov3-tiny.weights";
+const OUTPUT_DIR: &'static str = "./output";
+const OBJECTNESS_THRESHOLD: f32 = 0.8;
+const CLASS_PROB_THRESHOLD: f32 = 0.5;
+
+fn main() -> Fallible<()> {
+    // download weights file
+    fs::create_dir_all(OUTPUT_DIR)?;
+    let weights_path = Path::new(OUTPUT_DIR).join(WEIGHTS_FILE_NAME);
+
+    if !weights_path.exists() {
+        println!("Downloading weights file ...");
+        let mut writer = BufWriter::new(File::create(&weights_path)?);
+        reqwest::blocking::get(WEIGHTS_URL)?.copy_to(&mut writer)?;
     }
-    // Annotate image with object labels and bboxes
-    detections.draw_on_image(&mut img);
-    img.show("IMG");
+
+    // verify weights file
+    {
+        let mut reader = BufReader::new(File::open(&weights_path)?);
+        let mut buf = vec![];
+        reader.read_to_end(&mut buf)?;
+        let digest = Sha256::digest(&buf);
+        assert_eq!(
+            digest[..],
+            hex::decode(WEIGHTS_SHA256_HASH)?[..],
+            "the weights file {} is corrupted. Please remove it before running the example.",
+            weights_path.display()
+        );
+    }
+
+    // Load network & labels
+    let object_labels = std::fs::read_to_string(LABEL_PATH)?
+        .lines()
+        .map(ToOwned::to_owned)
+        .collect::<Vec<_>>();
+    let mut net = Network::load(CFG_PATH, Some(weights_path), false)?;
+
+    // Run object detection
+    let image = Image::open(IMAGE_PATH)?;
+    let detections = net.predict(&image, 0.25, 0.5, 0.45, true);
+
+    let get_max_prob = |det: &Detection| {
+        izip!(det.probabilities().iter().cloned(), object_labels.iter())
+            .fold1(|prev, curr| {
+                let (prev_prob, _) = prev;
+                let (curr_prob, _) = curr;
+                if curr_prob > prev_prob {
+                    curr
+                } else {
+                    prev
+                }
+            })
+            .unwrap()
+    };
+
+    detections
+        .iter()
+        .filter(|det| det.objectness() > OBJECTNESS_THRESHOLD)
+        .flat_map(|det| {
+            let (max_prob, label) = get_max_prob(&det);
+
+            if max_prob > CLASS_PROB_THRESHOLD {
+                Some((det, max_prob, label))
+            } else {
+                None
+            }
+        })
+        .enumerate()
+        .for_each(|(index, (det, prob, label))| {
+            let bbox = det.bbox();
+            let BBox { x, y, w, h } = bbox;
+
+            // Save image
+            let image_path =
+                Path::new(OUTPUT_DIR).join(format!("{}-{}-{:2.2}.jpg", index, label, prob * 100.0));
+            RgbImage::try_from(image.crop_bbox(bbox))
+                .unwrap()
+                .save(image_path)
+                .unwrap();
+
+            // print result
+            println!(
+                "{}\t{:.2}%\tx: {}\ty: {}\tw: {}\th: {}",
+                label,
+                prob * 100.0,
+                x,
+                y,
+                w,
+                h
+            );
+        });
+
+    Ok(())
 }
