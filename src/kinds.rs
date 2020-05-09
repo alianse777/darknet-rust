@@ -111,7 +111,7 @@ pub enum WeightsNormalizion {
     Softmax = sys::WEIGHTS_NORMALIZATION_T_SOFTMAX_NORMALIZATION as usize,
 }
 
-/// Non-Maximum Suppression (NMS) types.
+/// Non-maximum suppression (NMS) types.
 #[repr(usize)]
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, FromPrimitive)]
 pub enum NmsKind {

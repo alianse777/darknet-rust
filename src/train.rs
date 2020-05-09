@@ -37,12 +37,16 @@ where
                 model_config_file.as_ref().display()
             ),
         })?;
-    let weights_ctring = weights_file.map(|path| utils::path_to_cstring(path.as_ref()).ok_or_else(|| Error::EncodingError {
-            reason: format!(
-                "the path {} is invalid",
-                model_config_file.as_ref().display()
-            ),
-        })).transpose()?;
+    let weights_ctring = weights_file
+        .map(|path| {
+            utils::path_to_cstring(path.as_ref()).ok_or_else(|| Error::EncodingError {
+                reason: format!(
+                    "the path {} is invalid",
+                    model_config_file.as_ref().display()
+                ),
+            })
+        })
+        .transpose()?;
     let chart_cstring =
         utils::path_to_cstring(chart_file.as_ref()).ok_or_else(|| Error::EncodingError {
             reason: format!("the path {} is invalid", chart_file.as_ref().display()),
@@ -57,11 +61,14 @@ where
     unsafe {
         let data_config_ptr = data_config_ctring.as_ptr() as *mut _;
         let model_config_ptr = model_config_ctring.as_ptr() as *mut _;
-        let chart_ptr = chart_cstring.as_ptr()  as *mut _;
-        let weights_ptr = weights_ctring.as_ref().map(|cstring| cstring.as_ptr()  as *mut _).unwrap_or(ptr::null_mut());
+        let chart_ptr = chart_cstring.as_ptr() as *mut _;
+        let weights_ptr = weights_ctring
+            .as_ref()
+            .map(|cstring| cstring.as_ptr() as *mut _)
+            .unwrap_or(ptr::null_mut());
         let gpu_indexes_ptr = gpu_indexes_c_int.as_ptr() as *mut _;
         let num_gpus = gpu_indexes_c_int.len();
-        
+
         sys::train_detector(
             data_config_ptr,
             model_config_ptr,
