@@ -187,3 +187,5 @@ impl Drop for Network {
         }
     }
 }
+
+unsafe impl Send for Network {}

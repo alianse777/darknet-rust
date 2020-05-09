@@ -202,6 +202,8 @@ impl Drop for Image {
     }
 }
 
+unsafe impl Send for Image {}
+
 impl<'a> From<&'a DynamicImage> for Image {
     fn from(from: &'a DynamicImage) -> Self {
         match from {

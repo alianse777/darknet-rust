@@ -133,6 +133,8 @@ impl Drop for Detections {
     }
 }
 
+unsafe impl Send for Detections {}
+
 /// The iterator of a collection of detections.
 #[derive(Debug, Clone)]
 pub struct DetectionsIter<'a> {
