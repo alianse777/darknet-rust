@@ -80,9 +80,18 @@ impl Network {
         unsafe { self.net.as_ref().h as usize }
     }
 
-    /// Get network input shape tuple (width, height).
-    pub fn input_shape(&self) -> (usize, usize) {
-        (self.input_width(), self.input_height())
+    /// Get network input channels.
+    pub fn input_channels(&self) -> usize {
+        unsafe { self.net.as_ref().c as usize }
+    }
+
+    /// Get network input shape tuple (channels, height, width).
+    pub fn input_shape(&self) -> (usize, usize, usize) {
+        (
+            self.input_channels(),
+            self.input_height(),
+            self.input_width(),
+        )
     }
 
     /// Get the number of layers.
@@ -121,17 +130,6 @@ impl Network {
         M: IntoCowImage<'a>,
     {
         let cow = image.into_cow_image();
-        let maybe_resized =
-            if cow.width() == self.input_width() && cow.height() == self.input_height() {
-                cow
-            } else {
-                let resized = if use_letter_box {
-                    cow.letter_box(self.input_width(), self.input_height())
-                } else {
-                    cow.resize(self.input_width(), self.input_height())
-                };
-                Cow::Owned(resized)
-            };
 
         unsafe {
             let output_layer = self
@@ -143,12 +141,17 @@ impl Network {
                 .unwrap();
 
             // run prediction
-            sys::network_predict(*self.net.as_ref(), maybe_resized.get_raw_data());
+            if use_letter_box {
+                sys::network_predict_image_letterbox(self.net.as_ptr(), cow.image);
+            } else {
+                sys::network_predict_image(self.net.as_ptr(), cow.image);
+            }
+
             let mut nboxes: c_int = 0;
             let dets_ptr = sys::get_network_boxes(
                 self.net.as_mut(),
-                maybe_resized.width() as c_int,
-                maybe_resized.height() as c_int,
+                cow.width() as c_int,
+                cow.height() as c_int,
                 thresh,
                 hier_thres,
                 ptr::null_mut(),
