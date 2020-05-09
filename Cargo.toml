@@ -21,3 +21,4 @@ num-traits = "^0.2.0"
 reqwest = { version = "^0.10.0", features = ["blocking"] }
 sha2 = "^0.8.1"
 hex = "^0.4.2"
+argh = "^0.1.3"

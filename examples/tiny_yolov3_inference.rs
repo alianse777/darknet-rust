@@ -17,8 +17,8 @@ const WEIGHTS_SHA256_HASH: &'static str =
     "dccea06f59b781ec1234ddf8d1e94b9519a97f4245748a7d4db75d5b7080a42c";
 const WEIGHTS_FILE_NAME: &'static str = "./yolov3-tiny.weights";
 const OUTPUT_DIR: &'static str = "./output";
-const OBJECTNESS_THRESHOLD: f32 = 0.8;
-const CLASS_PROB_THRESHOLD: f32 = 0.5;
+const OBJECTNESS_THRESHOLD: f32 = 0.9;
+const CLASS_PROB_THRESHOLD: f32 = 0.9;
 
 fn main() -> Fallible<()> {
     // download weights file
