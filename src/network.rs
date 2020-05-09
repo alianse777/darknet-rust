@@ -3,28 +3,18 @@ use crate::{
     error::Error,
     image::IntoCowImage,
     layers::{Layer, Layers},
+    utils,
 };
 use darknet_sys as sys;
 
 use std::{
-    ffi::{c_void, CString},
+    ffi::c_void,
     mem,
     os::raw::c_int,
     path::Path,
     ptr::{self, NonNull},
     slice,
 };
-
-#[cfg(unix)]
-fn path_to_cstring<'a>(path: &'a Path) -> Option<CString> {
-    use std::os::unix::ffi::OsStrExt;
-    Some(CString::new(path.as_os_str().as_bytes()).unwrap())
-}
-
-#[cfg(not(unix))]
-fn path_to_cstring<'a>(path: &'a Path) -> Option<CString> {
-    path.to_str().map(|s| CString::new(s.as_bytes()).unwrap())
-}
 
 /// The network wrapper type for Darknet.
 pub struct Network {
@@ -41,14 +31,15 @@ impl Network {
         // convert paths to CString
         let weights_cstr = weights
             .map(|path| {
-                path_to_cstring(path.as_ref()).ok_or_else(|| Error::EncodingError {
+                utils::path_to_cstring(path.as_ref()).ok_or_else(|| Error::EncodingError {
                     reason: format!("the path {} is invalid", path.as_ref().display()),
                 })
             })
             .transpose()?;
-        let cfg_cstr = path_to_cstring(cfg.as_ref()).ok_or_else(|| Error::EncodingError {
-            reason: format!("the path {} is invalid", cfg.as_ref().display()),
-        })?;
+        let cfg_cstr =
+            utils::path_to_cstring(cfg.as_ref()).ok_or_else(|| Error::EncodingError {
+                reason: format!("the path {} is invalid", cfg.as_ref().display()),
+            })?;
 
         let ptr = unsafe {
             let raw_weights = weights_cstr
