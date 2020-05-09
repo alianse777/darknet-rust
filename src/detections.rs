@@ -29,6 +29,39 @@ impl<'a> Detection<'a> {
         unsafe { slice::from_raw_parts(self.detection.prob, self.num_classes()) }
     }
 
+    /// Get the class index with maximum probability.
+    ///
+    /// The method accpets an optional probability thresholds.
+    /// If the class with maximum probability os above tje threshold,
+    /// it returns the tuple (class_id, corresponding_probability).
+    /// Otherwise, it returns None.
+    pub fn best_class(&self, prob_threshold: Option<f32>) -> Option<(usize, f32)> {
+        self.probabilities()
+            .iter()
+            .cloned()
+            .enumerate()
+            .filter(|(_index, prob)| {
+                prob_threshold
+                    .as_ref()
+                    .map(|thresh| prob >= thresh)
+                    .unwrap_or(true)
+            })
+            .fold(None, |max_opt, curr| {
+                let max = match max_opt {
+                    Some(max) => max,
+                    None => return Some(curr),
+                };
+
+                let (_, max_prob) = max;
+                let (_, curr_prob) = curr;
+                if curr_prob > max_prob {
+                    Some(curr)
+                } else {
+                    Some(max)
+                }
+            })
+    }
+
     pub fn uc(&self) -> Option<&[f32]> {
         let ptr = self.detection.uc;
         if ptr.is_null() {
