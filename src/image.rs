@@ -2,8 +2,8 @@ use crate::{error::Error, BBox};
 use darknet_sys as sys;
 use image::{DynamicImage, ImageBuffer, Pixel};
 use std::{
-    borrow::Cow,
-    convert::{TryFrom, TryInto},
+    borrow::{Borrow, Cow},
+    convert::TryFrom,
     ops::Deref,
     os::raw::c_int,
     path::Path,
@@ -113,11 +113,18 @@ impl Image {
     }
 
     /// Crop a bounding box from the image.
-    pub fn crop_bbox(&self, bbox: &BBox) -> Image {
-        let left = (bbox.x - bbox.w / 2.0) * self.image.w as f32;
-        let top = (bbox.y - bbox.h / 2.0) * self.image.h as f32;
-        let width = bbox.w * self.image.w as f32;
-        let height = bbox.h * self.image.h as f32;
+    pub fn crop_bbox<B>(&self, bbox: B) -> Image
+    where
+        B: Borrow<BBox>,
+    {
+        let BBox { x, y, w, h } = *bbox.borrow();
+        let image_width = self.width() as f32;
+        let image_height = self.height() as f32;
+
+        let left = (x - w / 2.0) * image_width;
+        let top = (y - h / 2.0) * image_height;
+        let width = w * image_width;
+        let height = h * image_height;
         unsafe {
             Image {
                 image: sys::crop_image(
@@ -171,9 +178,9 @@ impl Image {
         self.image.c as usize
     }
 
-    /// Get the image shape tuple (width, height, channels).
+    /// Get the image shape tuple (channels, height, width).
     pub fn shape(&self) -> (usize, usize, usize) {
-        (self.width(), self.height(), self.channels())
+        (self.channels(), self.height(), self.width())
     }
 }
 
@@ -278,7 +285,7 @@ where
     type Error = Error;
 
     fn try_from(from: &Image) -> Result<Self, Self::Error> {
-        let (width, height, channels) = from.shape();
+        let (channels, height, width) = from.shape();
         if channels != P::CHANNEL_COUNT as usize {
             return Err(Error::ConversionError {
                 reason: format!(
