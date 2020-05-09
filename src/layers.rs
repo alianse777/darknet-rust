@@ -70,50 +70,62 @@ pub struct Layer<'a> {
 }
 
 impl<'a> Layer<'a> {
+    /// Get the type of layer.
     pub fn type_(&self) -> Option<LayerType> {
         FromPrimitive::from_usize(self.layer.type_ as usize)
     }
 
+    /// Get the activation type.
     pub fn activation(&self) -> Option<Activation> {
         FromPrimitive::from_usize(self.layer.activation as usize)
     }
 
+    /// Get the cost (or namely the loss) type.
     pub fn cost_type(&self) -> Option<CostType> {
         FromPrimitive::from_usize(self.layer.activation as usize)
     }
 
+    /// Get the weights format type.
     pub fn weights_type(&self) -> Option<WeightsType> {
         FromPrimitive::from_usize(self.layer.weights_type as usize)
     }
 
+    /// Get the weights normalization type.
     pub fn weights_normalization(&self) -> Option<WeightsNormalizion> {
-        FromPrimitive::from_usize(self.layer.weights_normalizion as usize)
+        FromPrimitive::from_usize(self.layer.weights_normalization as usize)
     }
 
+    /// Get the non-maximum suppression (NMS) type.
     pub fn nms_kind(&self) -> Option<NmsKind> {
         FromPrimitive::from_usize(self.layer.nms_kind as usize)
     }
 
+    /// Get the YOLO point type.
     pub fn yolo_point(&self) -> Option<YoloPoint> {
         FromPrimitive::from_usize(self.layer.yolo_point as usize)
     }
 
+    /// Get the IoU loss type.
     pub fn iou_loss(&self) -> Option<IoULoss> {
         FromPrimitive::from_usize(self.layer.iou_loss as usize)
     }
 
+    /// Get the IoU threshold type.
     pub fn iou_thresh_kind(&self) -> Option<IoULoss> {
         FromPrimitive::from_usize(self.layer.iou_thresh_kind as usize)
     }
 
+    /// Get the input tensor height.
     pub fn input_height(&self) -> usize {
         self.layer.h as usize
     }
 
+    /// Get the input tensor width.
     pub fn input_width(&self) -> usize {
         self.layer.w as usize
     }
 
+    /// Get the input tensor channels.
     pub fn input_channels(&self) -> usize {
         self.layer.c as usize
     }
@@ -127,14 +139,17 @@ impl<'a> Layer<'a> {
         )
     }
 
+    /// Get the output tensor height.
     pub fn output_height(&self) -> usize {
         self.layer.out_h as usize
     }
 
+    /// Get the output tensor width.
     pub fn output_width(&self) -> usize {
         self.layer.out_w as usize
     }
 
+    /// Get the output tensor channels.
     pub fn output_channels(&self) -> usize {
         self.layer.out_c as usize
     }
