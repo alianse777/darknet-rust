@@ -1,44 +1,43 @@
-A Rust wrapper for [Darknet](https://pjreddie.com/darknet/),  an open source neural network framework written in C and CUDA.
+# darknet-rust: A Rust bindings for AlexeyAB's Darknet
 
-Currently lacks training functionality as it usually done in python. (PRs are welcome)
+The crate is a Rust wrapper for [AlexeyAB's Darknet](https://github.com/AlexeyAB/darknet).
 
-Features:
-- [image](https://crates.io/crates/image) crate integration.
+It provides the following features:
 
-Put 'data' directory with your project if you plan to use Detections::draw_on_image method.
+- Provide both training and inference capabilities.
+- Load config files and model weights from upstream without modifications.
+- Safe type wrappers for C API. It includes network, detection and layer types.
 
-Example:
+## Examples
 
-```rust
-use darknet::{load_labels, Image, Network};
-use std::fs;
+The **tiny_yolov3_inference** example automatically downloads the YOLOv3 tiny weights, and produces inference results in `output` directory.
 
-fn main() {
-    // Load network & labels
-    let object_labels = load_labels("./darknet/data/coco.names").unwrap();
-    let mut net = Network::load(
-        "./darknet/cfg/yolov3-tiny.cfg",
-        Some("./yolov3-tiny.weights"),
-        false,
-        object_labels.clone(),
-    )
-    .unwrap();
-    let mut img = Image::open("./darknet/data/person.jpg").unwrap();
-    // Run object detection
-    let detections = net.predict(&mut img, 0.45, 0.3);
-    // Print which objects where found
-    println!("Found: {:?}", detections.get_labels());
-    // Save detected objects as separate images
-    fs::create_dir("./result");
-    for (label, obj) in detections.crop_from(&img) {
-        obj.save(&format!("./result/{}.jpg", label)).unwrap();
-    }
-    // Annotate image with object labels and bboxes
-    detections.draw_on_image(&mut img);
-    img.show("IMG");
-}
+```sh
+cargo run --release --example tiny_yolov3_inference
 ```
 
-You can download .weights files here: (https://pjreddie.com/darknet/yolo/)
+The **run_inference** example is an utility program that you can test a combination of model configs and weights on image files. For example, you can test the YOLOv4 mode.
 
-<b>Version 0.1.3 fixes some serious memory cleanup bugs, so you are encouraged to upgrade.</b>
+```sh
+cargo run --release --example run_inference -- \
+    --label-file darknet/data/coco.names \
+    --model-cfg darknet/cfg/yolov4.cfg \
+    --weights yolov4.weights \
+    darknet/data/*.jpg
+```
+
+Read the example code in `examples/` to understand the actual usage. More model configs and weights can be found here: (https://pjreddie.com/darknet/yolo/).
+
+## Usage
+
+Add our crate to your `Cargo.toml`. You may take a look at the [API documentation](https://docs.rs/darknet).
+
+```
+darknet = "^0.2.0"
+```
+
+We suggest earlier users update to newer version from 0.1. There are several memory leakage and several bugs fixed.
+
+## License
+
+The crate is licensed under MIT.
