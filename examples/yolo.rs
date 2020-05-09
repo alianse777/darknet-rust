@@ -1,7 +1,6 @@
-use darknet::{BBox, Detection, Image, Network};
+use darknet::{BBox, Image, Network};
 use failure::Fallible;
 use image::RgbImage;
-use itertools::{izip, Itertools};
 use sha2::{Digest, Sha256};
 use std::{
     convert::TryFrom,
@@ -57,31 +56,13 @@ fn main() -> Fallible<()> {
     let image = Image::open(IMAGE_PATH)?;
     let detections = net.predict(&image, 0.25, 0.5, 0.45, true);
 
-    let get_max_prob = |det: &Detection| {
-        izip!(det.probabilities().iter().cloned(), object_labels.iter())
-            .fold1(|prev, curr| {
-                let (prev_prob, _) = prev;
-                let (curr_prob, _) = curr;
-                if curr_prob > prev_prob {
-                    curr
-                } else {
-                    prev
-                }
-            })
-            .unwrap()
-    };
-
+    // show results
     detections
         .iter()
         .filter(|det| det.objectness() > OBJECTNESS_THRESHOLD)
         .flat_map(|det| {
-            let (max_prob, label) = get_max_prob(&det);
-
-            if max_prob > CLASS_PROB_THRESHOLD {
-                Some((det, max_prob, label))
-            } else {
-                None
-            }
+            det.best_class(Some(CLASS_PROB_THRESHOLD))
+                .map(|(class_index, prob)| (det, prob, &object_labels[class_index]))
         })
         .enumerate()
         .for_each(|(index, (det, prob, label))| {
