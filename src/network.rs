@@ -7,7 +7,6 @@ use crate::{
 use darknet_sys as sys;
 
 use std::{
-    borrow::Cow,
     ffi::{c_void, CString},
     mem,
     os::raw::c_int,
