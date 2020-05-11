@@ -1,6 +1,6 @@
 [package]
 name = "darknet"
-version = "0.1.3"
+version = "0.2.0"
 authors = ["alianse77"]
 edition = "2018"
 description = "A Rust wrapper for Darknet, an open source neural network framework written in C and CUDA."
@@ -9,8 +9,16 @@ license = "MIT"
 keywords = ["darknet", "machine-learning", "deep-learning", "neural-networks", "yolo"]
 readme = "./README.md"
 
-# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
-
 [dependencies]
-darknet-sys = "0.1.0"
-image = "0.23.1"
+darknet-sys = "^0.2.0"
+image = "^0.23.1"
+libc = "^0.2.0"
+failure = "^0.1.8"
+num-derive = "^0.3.0"
+num-traits = "^0.2.0"
+
+[dev-dependencies]
+reqwest = { version = "^0.10.0", features = ["blocking"] }
+sha2 = "^0.8.1"
+hex = "^0.4.2"
+argh = "^0.1.3"

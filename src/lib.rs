@@ -1,6 +1,22 @@
 mod detections;
+mod error;
 mod image;
+mod kinds;
+mod layers;
 mod network;
-pub use crate::detections::Detections;
-pub use crate::image::Image; //, IMTYPE_BMP, IMTYPE_JPG, IMTYPE_PNG, IMTYPE_TGA};
-pub use crate::network::{load_labels, Network};
+mod train;
+mod utils;
+
+pub use crate::image::{Image, IntoCowImage};
+pub use detections::{Detection, Detections, DetectionsIter};
+pub use error::Error;
+pub use kinds::{
+    Activation, BinaryActivation, CostType, IoULoss, LayerType, NmsKind, WeightsNormalizion,
+    WeightsType, YoloPoint,
+};
+pub use layers::{Layer, Layers, LayersIter};
+pub use network::Network;
+pub use train::train_detector;
+
+/// Bounding box in cxcywh format.
+pub type BBox = darknet_sys::box_;
