@@ -41,3 +41,6 @@ We suggest earlier users update to newer version from 0.1. There are several mem
 ## License
 
 The crate is licensed under MIT.
+
+
+Huge thanks to [jerry73204](https://github.com/jerry73204)
