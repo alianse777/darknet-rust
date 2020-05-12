@@ -3,7 +3,6 @@ use darknet_sys as sys;
 use image::{DynamicImage, ImageBuffer, Pixel};
 use std::{
     borrow::{Borrow, Cow},
-    convert::TryFrom,
     ops::Deref,
     os::raw::c_int,
     path::Path,
@@ -20,41 +19,41 @@ where
 
 impl ConvertSubpixel for u8 {
     fn from_subpixel(from: Self) -> f32 {
-        from as f32 / u8::MAX as f32
+        from as f32 / std::u8::MAX as f32
     }
 
     fn to_subpixel(from: f32) -> Self {
-        (from * u8::MAX as f32) as u8
+        (from * std::u8::MAX as f32) as u8
     }
 }
 
 impl ConvertSubpixel for u16 {
     fn from_subpixel(from: Self) -> f32 {
-        from as f32 / u16::MAX as f32
+        from as f32 / std::u16::MAX as f32
     }
 
     fn to_subpixel(from: f32) -> Self {
-        (from * u16::MAX as f32) as u16
+        (from * std::u16::MAX as f32) as u16
     }
 }
 
 impl ConvertSubpixel for u32 {
     fn from_subpixel(from: Self) -> f32 {
-        from as f32 / u32::MAX as f32
+        from as f32 / std::u32::MAX as f32
     }
 
     fn to_subpixel(from: f32) -> Self {
-        (from * u32::MAX as f32) as u32
+        (from * std::u32::MAX as f32) as u32
     }
 }
 
 impl ConvertSubpixel for u64 {
     fn from_subpixel(from: Self) -> f32 {
-        from as f32 / u64::MAX as f32
+        from as f32 / std::u64::MAX as f32
     }
 
     fn to_subpixel(from: f32) -> Self {
-        (from * u64::MAX as f32) as u64
+        (from * std::u64::MAX as f32) as u64
     }
 }
 
@@ -182,6 +181,40 @@ impl Image {
     pub fn shape(&self) -> (usize, usize, usize) {
         (self.channels(), self.height(), self.width())
     }
+
+    /// Convert Image to ImageBuffer from 'image' crate
+    pub fn to_image_buffer<P>(&self) -> Result<ImageBuffer<P, Vec<P::Subpixel>>, Error>
+    where
+        P: Pixel + 'static,
+        P::Subpixel: 'static,
+        P::Subpixel: ConvertSubpixel,
+    {
+        let (channels, height, width) = self.shape();
+        if channels != P::CHANNEL_COUNT as usize {
+            return Err(Error::ConversionError {
+                reason: format!(
+                    "cannot convert to a {} channel ImageBuffer from Image with {} channels",
+                    P::CHANNEL_COUNT,
+                    channels
+                ),
+            });
+        }
+
+        let mut image = ImageBuffer::<P, Vec<P::Subpixel>>::new(width as u32, height as u32);
+        image.enumerate_pixels_mut().for_each(|(x, y, pixel)| {
+            pixel
+                .channels_mut()
+                .iter_mut()
+                .enumerate()
+                .for_each(|(c, subpixel)| {
+                    let value =
+                        self.get_data()[c * height * width + y as usize * width + x as usize];
+                    *subpixel = ConvertSubpixel::to_subpixel(value);
+                });
+        });
+
+        Ok(image)
+    }
 }
 
 impl Clone for Image {
@@ -278,7 +311,8 @@ where
     }
 }
 
-impl<P> TryFrom<&Image> for ImageBuffer<P, Vec<P::Subpixel>>
+// note: only traits defined in the current crate can be implemented for a type parameter (with rustc 1.40.0)
+/*impl<P> TryFrom<&Image> for ImageBuffer<P, Vec<P::Subpixel>>
 where
     P: Pixel + 'static,
     P::Subpixel: 'static,
@@ -326,7 +360,7 @@ where
     fn try_from(from: Image) -> Result<Self, Self::Error> {
         Self::try_from(&from)
     }
-}
+}*/
 
 /// The traits converts input type to a copy-on-write image.
 pub trait IntoCowImage<'a> {
