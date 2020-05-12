@@ -1,6 +1,6 @@
 use darknet::{BBox, Image, Network};
 use failure::Fallible;
-use image::RgbImage;
+use image::{Rgb, RgbImage};
 use sha2::{Digest, Sha256};
 use std::{
     convert::TryFrom,
@@ -72,7 +72,9 @@ fn main() -> Fallible<()> {
             // Save image
             let image_path =
                 Path::new(OUTPUT_DIR).join(format!("{}-{}-{:2.2}.jpg", index, label, prob * 100.0));
-            RgbImage::try_from(image.crop_bbox(bbox))
+            image
+                .crop_bbox(bbox)
+                .to_image_buffer::<Rgb<u8>>()
                 .unwrap()
                 .save(image_path)
                 .unwrap();
