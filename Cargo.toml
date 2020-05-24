@@ -27,3 +27,5 @@ argh = "^0.1.3"
 buildtime-bindgen = ["darknet-sys/buildtime-bindgen"]
 runtime = ["darknet-sys/runtime"]
 dylib = ["darknet-sys/dylib"]
+enable-opencv = ["darknet-sys/enable-opencv"]
+enable-cuda = ["darknet-sys/enable-cuda"]
