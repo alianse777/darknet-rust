@@ -1,6 +1,6 @@
+use anyhow::Result;
 use argh::FromArgs;
 use darknet::{BBox, Image, Network};
-use failure::Fallible;
 use image::RgbImage;
 use std::{
     convert::TryFrom,
@@ -34,7 +34,7 @@ struct Args {
     input_images: Vec<PathBuf>,
 }
 
-fn main() -> Fallible<()> {
+fn main() -> Result<()> {
     let Args {
         label_file,
         model_cfg,
