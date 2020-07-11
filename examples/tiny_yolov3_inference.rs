@@ -1,9 +1,8 @@
 use darknet::{BBox, Image, Network};
 use failure::Fallible;
-use image::{Rgb, RgbImage};
+use image::Rgb;
 use sha2::{Digest, Sha256};
 use std::{
-    convert::TryFrom,
     fs::{self, File},
     io::{prelude::*, BufReader, BufWriter},
     path::Path,

@@ -1,6 +1,7 @@
 # rust
 /Cargo.lock
 /target
+/output
 
 # editor
 *.swp
