@@ -8,6 +8,8 @@ It provides the following features:
 - Load config files and model weights from upstream without modifications.
 - Safe type wrappers for C API. It includes network, detection and layer types.
 
+Minimal rustc version: 1.43.0
+
 ## Examples
 
 The **tiny_yolov3_inference** example automatically downloads the YOLOv3 tiny weights, and produces inference results in `output` directory.
