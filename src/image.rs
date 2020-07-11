@@ -3,6 +3,7 @@ use darknet_sys as sys;
 use image::{DynamicImage, ImageBuffer, Pixel};
 use std::{
     borrow::{Borrow, Cow},
+    convert::TryFrom,
     ops::Deref,
     os::raw::c_int,
     path::Path,
@@ -311,8 +312,7 @@ where
     }
 }
 
-// note: only traits defined in the current crate can be implemented for a type parameter (with rustc 1.40.0)
-/*impl<P> TryFrom<&Image> for ImageBuffer<P, Vec<P::Subpixel>>
+impl<P> TryFrom<&Image> for ImageBuffer<P, Vec<P::Subpixel>>
 where
     P: Pixel + 'static,
     P::Subpixel: 'static,
@@ -360,7 +360,7 @@ where
     fn try_from(from: Image) -> Result<Self, Self::Error> {
         Self::try_from(&from)
     }
-}*/
+}
 
 /// The traits converts input type to a copy-on-write image.
 pub trait IntoCowImage<'a> {
