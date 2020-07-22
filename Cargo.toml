@@ -10,18 +10,19 @@ keywords = ["darknet", "machine-learning", "deep-learning", "neural-networks", "
 readme = "./README.md"
 
 [dependencies]
-darknet-sys = "^0.2.2"
-image = "^0.23.1"
-libc = "^0.2.0"
-failure = "^0.1.8"
-num-derive = "^0.3.0"
-num-traits = "^0.2.0"
+darknet-sys = "0.2"
+image = "0.23"
+libc = "0.2"
+thiserror = "1.0"
+num-derive = "0.3"
+num-traits = "0.2"
 
 [dev-dependencies]
-reqwest = { version = "^0.10.0", features = ["blocking"] }
-sha2 = "^0.8.1"
-hex = "^0.4.2"
-argh = "^0.1.3"
+reqwest = { version = "0.10", features = ["blocking"] }
+sha2 = "0.8"
+hex = "0.4"
+argh = "0.1"
+anyhow = "1.0"
 
 [features]
 buildtime-bindgen = ["darknet-sys/buildtime-bindgen"]

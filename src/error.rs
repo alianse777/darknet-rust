@@ -1,19 +1,19 @@
-use failure::Fail;
 use image::error::ImageError;
 use std::io;
+use thiserror::Error;
 
 /// The error type for this crate.
-#[derive(Debug, Fail)]
+#[derive(Debug, Error)]
 pub enum Error {
-    #[fail(display = "image error: {:?}", _0)]
+    #[error("image error: {0:?}")]
     ImageError(ImageError),
-    #[fail(display = "I/O error: {:?}", _0)]
+    #[error("I/O error: {0:?}")]
     IoError(io::Error),
-    #[fail(display = "encoding error: {:?}", reason)]
+    #[error("encoding error: {reason:?}")]
     EncodingError { reason: String },
-    #[fail(display = "internal error: {:?}", reason)]
+    #[error("internal error: {reason:?}")]
     InternalError { reason: String },
-    #[fail(display = "conversion error: {:?}", reason)]
+    #[error("conversion error: {reason:?}")]
     ConversionError { reason: String },
 }
 

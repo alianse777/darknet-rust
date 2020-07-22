@@ -1,5 +1,5 @@
+use anyhow::Result;
 use darknet::{BBox, Image, Network};
-use failure::Fallible;
 use image::Rgb;
 use sha2::{Digest, Sha256};
 use std::{
@@ -19,7 +19,7 @@ const OUTPUT_DIR: &'static str = "./output";
 const OBJECTNESS_THRESHOLD: f32 = 0.9;
 const CLASS_PROB_THRESHOLD: f32 = 0.9;
 
-fn main() -> Fallible<()> {
+fn main() -> Result<()> {
     // download weights file
     fs::create_dir_all(OUTPUT_DIR)?;
     let weights_path = Path::new(OUTPUT_DIR).join(WEIGHTS_FILE_NAME);
