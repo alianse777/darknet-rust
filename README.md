@@ -47,7 +47,7 @@ We suggest earlier users update to newer version from 0.1. There are several mem
 ## Cargo Features
 
 - `enable-cuda`: Enable CUDA (expects CUDA 10.x and cuDNN 7.x).
-- `enable-cuda`: Enable OpenCV.
+- `enable-opencv`: Enable OpenCV.
 - `runtime`: Link to darknet dynamic library. For example, `libdark.so` on Linux.
 - `buildtime-bindgen`: Generate bindings from darknet headers.
 
