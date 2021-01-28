@@ -1,5 +1,7 @@
 # darknet-rust: A Rust bindings for AlexeyAB's Darknet
 
+[![Crates.io](https://img.shields.io/crates/v/darknet?style=for-the-badge)](https://crates.io/crates/darknet) ![GitHub Workflow Status](https://img.shields.io/github/workflow/status/alianse777/darknet-rust/Rust?style=for-the-badge)
+
 The crate is a Rust wrapper for [AlexeyAB's Darknet](https://github.com/AlexeyAB/darknet).
 
 It provides the following features:
