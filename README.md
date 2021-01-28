@@ -41,7 +41,7 @@ Read the example code in `examples/` to understand the actual usage. More model 
 Add our crate to your `Cargo.toml`. You may take a look at the [API documentation](https://docs.rs/darknet).
 
 ```
-darknet = "^0.3.0"
+darknet = "0.3.2"
 ```
 
 We suggest earlier users update to newer version from 0.1. There are several memory leakage and several bugs fixed.
