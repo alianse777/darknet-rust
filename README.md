@@ -71,7 +71,7 @@ You can optionally enable CUDA and OpenCV features. Please read [Build with CUDA
 
 ```toml[dependencies]
 [dependencies]
-darknet = {version = "0.3.2", features = ["enable-cuda", "enable-opencv", ...] }
+darknet = {version = "0.3.2", features = ["enable-cuda", "enable-opencv"] }
 ```
 ### Method 2: Build with custom source
 
@@ -86,7 +86,7 @@ With `runtime` feature, darknet-sys will not compile libdarknet source code and 
 
 ```toml
 [dependencies]
-darknet = {version = "0.3.2", features = ["runtime", ...] }
+darknet = {version = "0.3.2", features = ["runtime"] }
 ```
 ### Re-generate bindings
 
@@ -94,7 +94,7 @@ With `buildtime-bindgen` feature, darknet-sys re-generates bindings from headers
 
 ```toml
 [dependencies]
-darknet = {version = "0.3.2", features = ["buildtime-bindgen", ...] }
+darknet = {version = "0.3.2", features = ["buildtime-bindgen"] }
 ```
 If you want to use your (possibly modified) header files, point `DARKNET_INCLUDE_PATH` environment variable to your header dir.
 
@@ -110,7 +110,7 @@ export CUDA_PATH=/usr/local/cuda-10.1
 
 ```toml
 [dependencies]
-darknet = {version = "0.3.2", features = ["enable-cuda", "enable-opencv", ...] }
+darknet = {version = "0.3.2", features = ["enable-cuda", "enable-opencv"] }
 ```
 You can also set `CUDA_ARCHITECTURES` which is passed to libdarknet's cmake. It defaults to `Auto`, which auto-detects GPU architecture based on card present in the system during build.
 
