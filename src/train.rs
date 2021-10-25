@@ -15,6 +15,8 @@ pub fn train_detector<P1, P2, P3, P4, G>(
     show_imgs: bool,
     benchmark_layers: bool,
     chart_file: P4,
+    thresh: f32,
+    iou_thresh: f32,
 ) -> Result<(), Error>
 where
     P1: AsRef<Path>,
@@ -78,6 +80,8 @@ where
             clear as c_int,
             dont_show as c_int,
             calc_map as c_int,
+            thresh,
+            iou_thresh,
             mjpeg_port.map(|port| port as c_int).unwrap_or(-1),
             show_imgs as c_int,
             benchmark_layers as c_int,
