@@ -10,7 +10,7 @@ keywords = ["darknet", "machine-learning", "deep-learning", "neural-networks", "
 readme = "./README.md"
 
 [dependencies]
-darknet-sys = "0.3"
+darknet-sys = "0.3.1"
 image = "0.23"
 libc = "0.2"
 thiserror = "1.0"
