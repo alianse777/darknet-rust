@@ -12,9 +12,9 @@ It provides the following features:
 
 Minimal rustc version: 1.43.0
 
-## Version 0.3 changes:
+## Version 0.3.3 changes:
 
-- Error handling with anyhow
+- train_detector now takes thresh and iou_thresh arguments, version updated to reflect latest libdarknet repo.
 
 ## Examples
 
