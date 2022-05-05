@@ -57,6 +57,7 @@ By default, darknet will compile and link libdarknet statically. You can control
 - `enable-cuda`: Enable CUDA (expects CUDA 10.x and cuDNN 7.x).
 - `enable-cudnn`: Enable cuDNN
 - `enable-opencv`: Enable OpenCV.
+- `enable-openmp`: Enable OpenMP in darknet. Used for parallelization when running on the CPU. Enabled by default.
 - `runtime`: Link to libdarknet dynamic library. For example, `libdark.so` on Linux.
 - `dylib`: Build dynamic library instead of static
 - `buildtime-bindgen`: Generate bindings from libdarknet headers.
