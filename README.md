@@ -52,6 +52,11 @@ libdarknet = C/C++ darknet implementation
 
 By default, darknet will compile and link libdarknet statically. You can control the feature flags to change the behavior.
 
+Before running tests:
+
+`git submodule init && git submodule update --recursive`
+
+
 ## Cargo Features
 
 - `enable-cuda`: Enable CUDA (expects CUDA 10.x and cuDNN 7.x).
