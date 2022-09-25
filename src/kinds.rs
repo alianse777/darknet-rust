@@ -102,7 +102,7 @@ pub enum WeightsType {
     PerFeature = sys::WEIGHTS_TYPE_T_PER_FEATURE as usize,
 }
 
-/// Weights normalizion types.
+/// Weights normalization types.
 #[repr(usize)]
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, FromPrimitive)]
 pub enum WeightsNormalizion {
