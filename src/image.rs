@@ -144,7 +144,7 @@ impl Image {
     }
 
     /// Returns pixel values as a slice.
-    pub fn get_data<'a>(&'a self) -> &'a [f32] {
+    pub fn get_data(&self) -> &[f32] {
         return unsafe {
             slice::from_raw_parts(
                 self.image.data,
@@ -154,7 +154,7 @@ impl Image {
     }
 
     /// Returns pixel values as a mutable slice.
-    pub fn get_data_mut<'a>(&'a self) -> &'a mut [f32] {
+    pub fn get_data_mut(&self) -> &mut [f32] {
         return unsafe {
             slice::from_raw_parts_mut(
                 self.image.data,
