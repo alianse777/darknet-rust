@@ -2,7 +2,7 @@
 name = "darknet"
 version = "0.3.4"
 authors = ["alianse77"]
-edition = "2018"
+edition = "2021"
 description = "A Rust wrapper for Darknet, an open source neural network framework written in C and CUDA."
 repository = "https://github.com/alianse777/darknet-rust"
 license = "MIT"
