@@ -1,5 +1,6 @@
 use crate::BBox;
 use darknet_sys as sys;
+use std::cmp::Ordering::Less;
 use std::{
     iter::{ExactSizeIterator, FusedIterator, Iterator},
     os::raw::c_int,
@@ -31,35 +32,17 @@ impl<'a> Detection<'a> {
 
     /// Get the class index with maximum probability.
     ///
-    /// The method accepts an optional probability thresholds.
-    /// If the class with maximum probability os above tje threshold,
+    /// The method accepts an optional [prob_threshold].
+    /// If the class with maximum probability is above the [prob_threshold],
     /// it returns the tuple (class_id, corresponding_probability).
     /// Otherwise, it returns None.
     pub fn best_class(&self, prob_threshold: Option<f32>) -> Option<(usize, f32)> {
         self.probabilities()
             .iter()
-            .cloned()
             .enumerate()
-            .filter(|(_index, prob)| {
-                prob_threshold
-                    .as_ref()
-                    .map(|thresh| prob >= thresh)
-                    .unwrap_or(true)
-            })
-            .fold(None, |max_opt, curr| {
-                let max = match max_opt {
-                    Some(max) => max,
-                    None => return Some(curr),
-                };
-
-                let (_, max_prob) = max;
-                let (_, curr_prob) = curr;
-                if curr_prob > max_prob {
-                    Some(curr)
-                } else {
-                    Some(max)
-                }
-            })
+            .filter(|(_, prob)| prob_threshold.map_or(true, |thresh| thresh.lt(prob)))
+            .max_by(|(_, a), (_, b)| a.partial_cmp(b).unwrap_or(Less))
+            .map(|(idx, prob)| (idx, *prob))
     }
 
     pub fn uc(&self) -> Option<&[f32]> {
