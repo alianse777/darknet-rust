@@ -90,13 +90,13 @@ impl Network {
     }
 
     /// Get network layers.
-    pub fn layers<'a>(&'a self) -> Layers<'a> {
+    pub fn layers(&self) -> Layers {
         let layers = unsafe { slice::from_raw_parts(self.net.as_ref().layers, self.num_layers()) };
         Layers { layers }
     }
 
     /// Get layer by index.
-    pub fn get_layer<'a>(&'a self, index: usize) -> Option<Layer<'a>> {
+    pub fn get_layer(&self, index: usize) -> Option<Layer> {
         if index >= self.num_layers() {
             return None;
         }
