@@ -31,7 +31,7 @@ impl<'a> Detection<'a> {
 
     /// Get the class index with maximum probability.
     ///
-    /// The method accpets an optional probability thresholds.
+    /// The method accepts an optional probability thresholds.
     /// If the class with maximum probability os above tje threshold,
     /// it returns the tuple (class_id, corresponding_probability).
     /// Otherwise, it returns None.
@@ -90,7 +90,7 @@ pub struct Detections {
 
 impl Detections {
     /// Get a detection instance by index.
-    pub fn get<'a>(&'a self, index: usize) -> Option<Detection<'a>> {
+    pub fn get(&self, index: usize) -> Option<Detection> {
         if index >= self.n_detections {
             return None;
         }
@@ -108,7 +108,7 @@ impl Detections {
     }
 
     /// Get the iterator of a collection of detections.
-    pub fn iter<'a>(&'a self) -> DetectionsIter<'a> {
+    pub fn iter(&self) -> DetectionsIter {
         DetectionsIter {
             detections: self,
             index: 0,
