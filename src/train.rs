@@ -1,6 +1,6 @@
 use crate::{error::Error, utils};
 use darknet_sys as sys;
-use std::{mem, os::raw::c_int, path::Path, ptr};
+use std::{os::raw::c_int, path::Path, ptr};
 
 /// Train a detector model.
 pub fn train_detector<P1, P2, P3, P4, G>(
@@ -67,11 +67,11 @@ where
         );
     }
 
-    mem::drop(data_config_ctring);
-    mem::drop(model_config_ctring);
-    mem::drop(weights_ctring);
-    mem::drop(chart_cstring);
-    mem::drop(gpu_indexes_c_int);
+    drop(data_config_ctring);
+    drop(model_config_ctring);
+    drop(weights_ctring);
+    drop(chart_cstring);
+    drop(gpu_indexes_c_int);
 
     Ok(())
 }
