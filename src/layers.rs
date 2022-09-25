@@ -27,8 +27,8 @@ impl<'a> Layers<'a> {
 }
 
 impl<'a> IntoIterator for &'a Layers<'a> {
-    type IntoIter = LayersIter<'a>;
     type Item = Layer<'a>;
+    type IntoIter = LayersIter<'a>;
 
     fn into_iter(self) -> Self::IntoIter {
         self.iter()
@@ -47,7 +47,7 @@ impl<'a> Iterator for LayersIter<'a> {
 
     fn next(&mut self) -> Option<Self::Item> {
         let opt = self.layers.get(self.index);
-        if let Some(_) = opt {
+        if opt.is_some() {
             self.index += 1;
         }
         opt

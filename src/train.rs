@@ -3,6 +3,7 @@ use darknet_sys as sys;
 use std::{os::raw::c_int, path::Path, ptr};
 
 /// Train a detector model.
+#[allow(clippy::too_many_arguments)]
 pub fn train_detector<P1, P2, P3, P4, G>(
     data_config_file: P1,
     model_config_file: P2,

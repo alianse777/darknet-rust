@@ -90,6 +90,11 @@ impl Detections {
         self.n_detections
     }
 
+    /// Returns `true` if the detections has a length of 0.
+    pub fn is_empty(&self) -> bool {
+        self.len() == 0
+    }
+
     /// Get the iterator of a collection of detections.
     pub fn iter(&self) -> DetectionsIter {
         DetectionsIter {
@@ -130,7 +135,7 @@ impl<'a> Iterator for DetectionsIter<'a> {
 
     fn next(&mut self) -> Option<Self::Item> {
         let opt = self.detections.get(self.index);
-        if let Some(_) = opt {
+        if opt.is_some() {
             self.index += 1;
         }
         opt
