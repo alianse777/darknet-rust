@@ -41,11 +41,14 @@ impl Network {
 
         let cfg_cstr = utils::path_to_cstring_or_error(cfg.as_ref())?;
 
+        let clear = c_int::from(clear);
+
         let ptr = unsafe {
             let raw_weights = weights_cstr
                 .as_ref()
                 .map_or(ptr::null_mut(), |cstr| cstr.as_ptr() as *mut _);
-            sys::load_network(cfg_cstr.as_ptr() as *mut _, raw_weights, clear as c_int)
+            let raw_cfg = cfg_cstr.as_ptr() as *mut _;
+            sys::load_network(raw_cfg, raw_weights, clear)
         };
 
         let net = NonNull::new(ptr).ok_or_else(|| Error::InternalError {
