@@ -25,34 +25,12 @@ where
     P4: AsRef<Path>,
     G: AsRef<[usize]>,
 {
-    let data_config_ctring =
-        utils::path_to_cstring(data_config_file.as_ref()).ok_or_else(|| Error::EncodingError {
-            reason: format!(
-                "the path {} is invalid",
-                data_config_file.as_ref().display()
-            ),
-        })?;
-    let model_config_ctring =
-        utils::path_to_cstring(model_config_file.as_ref()).ok_or_else(|| Error::EncodingError {
-            reason: format!(
-                "the path {} is invalid",
-                model_config_file.as_ref().display()
-            ),
-        })?;
+    let data_config_ctring = utils::path_to_cstring_or_error(data_config_file.as_ref())?;
+    let model_config_ctring = utils::path_to_cstring_or_error(model_config_file.as_ref())?;
     let weights_ctring = weights_file
-        .map(|path| {
-            utils::path_to_cstring(path.as_ref()).ok_or_else(|| Error::EncodingError {
-                reason: format!(
-                    "the path {} is invalid",
-                    model_config_file.as_ref().display()
-                ),
-            })
-        })
+        .map(|path| utils::path_to_cstring_or_error(path.as_ref()))
         .transpose()?;
-    let chart_cstring =
-        utils::path_to_cstring(chart_file.as_ref()).ok_or_else(|| Error::EncodingError {
-            reason: format!("the path {} is invalid", chart_file.as_ref().display()),
-        })?;
+    let chart_cstring = utils::path_to_cstring_or_error(chart_file.as_ref())?;
     let gpu_indexes_c_int = gpu_indexes
         .as_ref()
         .iter()

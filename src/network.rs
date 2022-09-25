@@ -35,18 +35,11 @@ impl Network {
         C: AsRef<Path>,
         W: AsRef<Path>,
     {
-        // convert paths to CString
         let weights_cstr = weights
-            .map(|path| {
-                utils::path_to_cstring(path.as_ref()).ok_or_else(|| Error::EncodingError {
-                    reason: format!("the path {} is invalid", path.as_ref().display()),
-                })
-            })
+            .map(|path| utils::path_to_cstring_or_error(path.as_ref()))
             .transpose()?;
-        let cfg_cstr =
-            utils::path_to_cstring(cfg.as_ref()).ok_or_else(|| Error::EncodingError {
-                reason: format!("the path {} is invalid", cfg.as_ref().display()),
-            })?;
+
+        let cfg_cstr = utils::path_to_cstring_or_error(cfg.as_ref())?;
 
         let ptr = unsafe {
             let raw_weights = weights_cstr
