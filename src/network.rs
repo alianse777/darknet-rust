@@ -44,8 +44,7 @@ impl Network {
         let ptr = unsafe {
             let raw_weights = weights_cstr
                 .as_ref()
-                .map(|cstr| cstr.as_ptr() as *mut _)
-                .unwrap_or(ptr::null_mut());
+                .map_or(ptr::null_mut(), |cstr| cstr.as_ptr() as *mut _);
             sys::load_network(cfg_cstr.as_ptr() as *mut _, raw_weights, clear as c_int)
         };
 
