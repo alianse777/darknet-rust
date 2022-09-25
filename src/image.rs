@@ -139,7 +139,7 @@ impl Image {
     }
 
     /// Returns pointer to raw image data.
-    pub unsafe fn get_raw_data(&self) -> *mut f32 {
+    pub fn get_raw_data(&self) -> *mut f32 {
         self.image.data
     }
 
