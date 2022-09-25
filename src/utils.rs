@@ -1,6 +1,6 @@
+use crate::Error;
 use std::os::unix::ffi::OsStrExt;
 use std::{ffi::CString, path::Path};
-use crate::Error;
 
 #[cfg(unix)]
 pub fn path_to_cstring(path: &Path) -> Option<CString> {
