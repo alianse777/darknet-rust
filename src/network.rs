@@ -9,7 +9,6 @@ use darknet_sys as sys;
 
 use std::{
     ffi::c_void,
-    mem,
     os::raw::c_int,
     path::Path,
     ptr::{self, NonNull},
@@ -54,8 +53,8 @@ impl Network {
         })?;
 
         // drop paths here to avoid early deallocation
-        mem::drop(cfg_cstr);
-        mem::drop(weights_cstr);
+        drop(cfg_cstr);
+        drop(weights_cstr);
 
         Ok(Self { net })
     }
