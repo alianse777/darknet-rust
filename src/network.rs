@@ -22,6 +22,14 @@ pub struct Network {
 
 impl Network {
     /// Build the network instance from a configuration file and an optional weights file.
+    ///
+    /// This will abort the program with an exit code of 1 if any of the following occur.
+    /// - The config has no sections.
+    /// - The first section of the config is not `[net]` or `[network]`.
+    /// - `fopen` fails on [weights] (if provided).
+    /// - The weights file is invalid
+    ///
+    /// Returns an [Err] if [cfg] or [weights] (if provided) contain a null byte.
     pub fn load<C, W>(cfg: C, weights: Option<W>, clear: bool) -> Result<Network, Error>
     where
         C: AsRef<Path>,
