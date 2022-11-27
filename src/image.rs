@@ -20,41 +20,41 @@ where
 
 impl ConvertSubpixel for u8 {
     fn from_subpixel(from: Self) -> f32 {
-        from as f32 / std::u8::MAX as f32
+        from as f32 / u8::MAX as f32
     }
 
     fn to_subpixel(from: f32) -> Self {
-        (from * std::u8::MAX as f32) as u8
+        (from * u8::MAX as f32) as u8
     }
 }
 
 impl ConvertSubpixel for u16 {
     fn from_subpixel(from: Self) -> f32 {
-        from as f32 / std::u16::MAX as f32
+        from as f32 / u16::MAX as f32
     }
 
     fn to_subpixel(from: f32) -> Self {
-        (from * std::u16::MAX as f32) as u16
+        (from * u16::MAX as f32) as u16
     }
 }
 
 impl ConvertSubpixel for u32 {
     fn from_subpixel(from: Self) -> f32 {
-        from as f32 / std::u32::MAX as f32
+        from as f32 / u32::MAX as f32
     }
 
     fn to_subpixel(from: f32) -> Self {
-        (from * std::u32::MAX as f32) as u32
+        (from * u32::MAX as f32) as u32
     }
 }
 
 impl ConvertSubpixel for u64 {
     fn from_subpixel(from: Self) -> f32 {
-        from as f32 / std::u64::MAX as f32
+        from as f32 / u64::MAX as f32
     }
 
     fn to_subpixel(from: f32) -> Self {
-        (from * std::u64::MAX as f32) as u64
+        (from * u64::MAX as f32) as u64
     }
 }
 
@@ -139,12 +139,12 @@ impl Image {
     }
 
     /// Returns pointer to raw image data.
-    pub unsafe fn get_raw_data(&self) -> *mut f32 {
+    pub fn get_raw_data(&self) -> *mut f32 {
         self.image.data
     }
 
     /// Returns pixel values as a slice.
-    pub fn get_data<'a>(&'a self) -> &'a [f32] {
+    pub fn get_data(&self) -> &[f32] {
         return unsafe {
             slice::from_raw_parts(
                 self.image.data,
@@ -154,7 +154,7 @@ impl Image {
     }
 
     /// Returns pixel values as a mutable slice.
-    pub fn get_data_mut<'a>(&'a self) -> &'a mut [f32] {
+    pub fn get_data_mut(&self) -> &mut [f32] {
         return unsafe {
             slice::from_raw_parts_mut(
                 self.image.data,

@@ -1,8 +1,9 @@
 use crate::{error::Error, utils};
 use darknet_sys as sys;
-use std::{mem, os::raw::c_int, path::Path, ptr};
+use std::{os::raw::c_int, path::Path, ptr};
 
 /// Train a detector model.
+#[allow(clippy::too_many_arguments)]
 pub fn train_detector<P1, P2, P3, P4, G>(
     data_config_file: P1,
     model_config_file: P2,
@@ -25,34 +26,12 @@ where
     P4: AsRef<Path>,
     G: AsRef<[usize]>,
 {
-    let data_config_ctring =
-        utils::path_to_cstring(data_config_file.as_ref()).ok_or_else(|| Error::EncodingError {
-            reason: format!(
-                "the path {} is invalid",
-                data_config_file.as_ref().display()
-            ),
-        })?;
-    let model_config_ctring =
-        utils::path_to_cstring(model_config_file.as_ref()).ok_or_else(|| Error::EncodingError {
-            reason: format!(
-                "the path {} is invalid",
-                model_config_file.as_ref().display()
-            ),
-        })?;
+    let data_config_ctring = utils::path_to_cstring_or_error(data_config_file.as_ref())?;
+    let model_config_ctring = utils::path_to_cstring_or_error(model_config_file.as_ref())?;
     let weights_ctring = weights_file
-        .map(|path| {
-            utils::path_to_cstring(path.as_ref()).ok_or_else(|| Error::EncodingError {
-                reason: format!(
-                    "the path {} is invalid",
-                    model_config_file.as_ref().display()
-                ),
-            })
-        })
+        .map(|path| utils::path_to_cstring_or_error(path.as_ref()))
         .transpose()?;
-    let chart_cstring =
-        utils::path_to_cstring(chart_file.as_ref()).ok_or_else(|| Error::EncodingError {
-            reason: format!("the path {} is invalid", chart_file.as_ref().display()),
-        })?;
+    let chart_cstring = utils::path_to_cstring_or_error(chart_file.as_ref())?;
     let gpu_indexes_c_int = gpu_indexes
         .as_ref()
         .iter()
@@ -89,11 +68,11 @@ where
         );
     }
 
-    mem::drop(data_config_ctring);
-    mem::drop(model_config_ctring);
-    mem::drop(weights_ctring);
-    mem::drop(chart_cstring);
-    mem::drop(gpu_indexes_c_int);
+    drop(data_config_ctring);
+    drop(model_config_ctring);
+    drop(weights_ctring);
+    drop(chart_cstring);
+    drop(gpu_indexes_c_int);
 
     Ok(())
 }

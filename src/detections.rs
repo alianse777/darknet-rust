@@ -1,5 +1,6 @@
 use crate::BBox;
 use darknet_sys as sys;
+use std::cmp::Ordering::Less;
 use std::{
     iter::{ExactSizeIterator, FusedIterator, Iterator},
     os::raw::c_int,
@@ -31,35 +32,17 @@ impl<'a> Detection<'a> {
 
     /// Get the class index with maximum probability.
     ///
-    /// The method accpets an optional probability thresholds.
-    /// If the class with maximum probability os above tje threshold,
+    /// The method accepts an optional [prob_threshold].
+    /// If the class with maximum probability is above the [prob_threshold],
     /// it returns the tuple (class_id, corresponding_probability).
     /// Otherwise, it returns None.
     pub fn best_class(&self, prob_threshold: Option<f32>) -> Option<(usize, f32)> {
         self.probabilities()
             .iter()
-            .cloned()
             .enumerate()
-            .filter(|(_index, prob)| {
-                prob_threshold
-                    .as_ref()
-                    .map(|thresh| prob >= thresh)
-                    .unwrap_or(true)
-            })
-            .fold(None, |max_opt, curr| {
-                let max = match max_opt {
-                    Some(max) => max,
-                    None => return Some(curr),
-                };
-
-                let (_, max_prob) = max;
-                let (_, curr_prob) = curr;
-                if curr_prob > max_prob {
-                    Some(curr)
-                } else {
-                    Some(max)
-                }
-            })
+            .filter(|(_, prob)| prob_threshold.map_or(true, |thresh| thresh.lt(prob)))
+            .max_by(|(_, a), (_, b)| a.partial_cmp(b).unwrap_or(Less))
+            .map(|(idx, prob)| (idx, *prob))
     }
 
     pub fn uc(&self) -> Option<&[f32]> {
@@ -90,7 +73,7 @@ pub struct Detections {
 
 impl Detections {
     /// Get a detection instance by index.
-    pub fn get<'a>(&'a self, index: usize) -> Option<Detection<'a>> {
+    pub fn get(&self, index: usize) -> Option<Detection> {
         if index >= self.n_detections {
             return None;
         }
@@ -107,8 +90,13 @@ impl Detections {
         self.n_detections
     }
 
+    /// Returns `true` if the detections has a length of 0.
+    pub fn is_empty(&self) -> bool {
+        self.len() == 0
+    }
+
     /// Get the iterator of a collection of detections.
-    pub fn iter<'a>(&'a self) -> DetectionsIter<'a> {
+    pub fn iter(&self) -> DetectionsIter {
         DetectionsIter {
             detections: self,
             index: 0,
@@ -147,7 +135,7 @@ impl<'a> Iterator for DetectionsIter<'a> {
 
     fn next(&mut self) -> Option<Self::Item> {
         let opt = self.detections.get(self.index);
-        if let Some(_) = opt {
+        if opt.is_some() {
             self.index += 1;
         }
         opt

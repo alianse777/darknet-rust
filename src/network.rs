@@ -9,7 +9,6 @@ use darknet_sys as sys;
 
 use std::{
     ffi::c_void,
-    mem,
     os::raw::c_int,
     path::Path,
     ptr::{self, NonNull},
@@ -23,30 +22,33 @@ pub struct Network {
 
 impl Network {
     /// Build the network instance from a configuration file and an optional weights file.
+    ///
+    /// This will abort the program with an exit code of 1 if any of the following occur.
+    /// - The config has no sections.
+    /// - The first section of the config is not `[net]` or `[network]`.
+    /// - `fopen` fails on [weights] (if provided).
+    /// - The weights file is invalid
+    ///
+    /// Returns an [Err] if [cfg] or [weights] (if provided) contain a null byte.
     pub fn load<C, W>(cfg: C, weights: Option<W>, clear: bool) -> Result<Network, Error>
     where
         C: AsRef<Path>,
         W: AsRef<Path>,
     {
-        // convert paths to CString
         let weights_cstr = weights
-            .map(|path| {
-                utils::path_to_cstring(path.as_ref()).ok_or_else(|| Error::EncodingError {
-                    reason: format!("the path {} is invalid", path.as_ref().display()),
-                })
-            })
+            .map(|path| utils::path_to_cstring_or_error(path.as_ref()))
             .transpose()?;
-        let cfg_cstr =
-            utils::path_to_cstring(cfg.as_ref()).ok_or_else(|| Error::EncodingError {
-                reason: format!("the path {} is invalid", cfg.as_ref().display()),
-            })?;
+
+        let cfg_cstr = utils::path_to_cstring_or_error(cfg.as_ref())?;
+
+        let clear = c_int::from(clear);
 
         let ptr = unsafe {
             let raw_weights = weights_cstr
                 .as_ref()
-                .map(|cstr| cstr.as_ptr() as *mut _)
-                .unwrap_or(ptr::null_mut());
-            sys::load_network(cfg_cstr.as_ptr() as *mut _, raw_weights, clear as c_int)
+                .map_or(ptr::null_mut(), |cstr| cstr.as_ptr() as *mut _);
+            let raw_cfg = cfg_cstr.as_ptr() as *mut _;
+            sys::load_network(raw_cfg, raw_weights, clear)
         };
 
         let net = NonNull::new(ptr).ok_or_else(|| Error::InternalError {
@@ -54,8 +56,8 @@ impl Network {
         })?;
 
         // drop paths here to avoid early deallocation
-        mem::drop(cfg_cstr);
-        mem::drop(weights_cstr);
+        drop(cfg_cstr);
+        drop(weights_cstr);
 
         Ok(Self { net })
     }
@@ -90,13 +92,13 @@ impl Network {
     }
 
     /// Get network layers.
-    pub fn layers<'a>(&'a self) -> Layers<'a> {
+    pub fn layers(&self) -> Layers {
         let layers = unsafe { slice::from_raw_parts(self.net.as_ref().layers, self.num_layers()) };
         Layers { layers }
     }
 
     /// Get layer by index.
-    pub fn get_layer<'a>(&'a self, index: usize) -> Option<Layer<'a>> {
+    pub fn get_layer(&self, index: usize) -> Option<Layer> {
         if index >= self.num_layers() {
             return None;
         }
