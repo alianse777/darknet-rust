@@ -32,8 +32,8 @@ impl<'a> Detection<'a> {
 
     /// Get the class index with maximum probability.
     ///
-    /// The method accepts an optional [prob_threshold].
-    /// If the class with maximum probability is above the [prob_threshold],
+    /// The method accepts an optional \[prob_threshold\].
+    /// If the class with maximum probability is above the \[prob_threshold\],
     /// it returns the tuple (class_id, corresponding_probability).
     /// Otherwise, it returns None.
     pub fn best_class(&self, prob_threshold: Option<f32>) -> Option<(usize, f32)> {
