@@ -245,12 +245,15 @@ impl<'a> From<&'a DynamicImage> for Image {
             DynamicImage::ImageLumaA8(image) => image.into(),
             DynamicImage::ImageRgb8(image) => image.into(),
             DynamicImage::ImageRgba8(image) => image.into(),
-            DynamicImage::ImageBgr8(image) => image.into(),
-            DynamicImage::ImageBgra8(image) => image.into(),
+            DynamicImage::ImageRgb32F(image) => image.into(),
+            DynamicImage::ImageRgba32F(image) => image.into(),
             DynamicImage::ImageLuma16(image) => image.into(),
             DynamicImage::ImageLumaA16(image) => image.into(),
             DynamicImage::ImageRgb16(image) => image.into(),
             DynamicImage::ImageRgba16(image) => image.into(),
+            // we must match the unknown case due to #[non_exhaustive] on DynamicImage. `rgba1` was
+            // chosen as it is the largest format and thus less likely to be a lossy conversion.
+            img => img.to_rgba16().into(),
         }
     }
 }
