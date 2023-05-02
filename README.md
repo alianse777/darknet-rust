@@ -12,9 +12,9 @@ It provides the following features:
 
 Minimal rustc version: 1.43.0
 
-## Version 0.3.5 changes:
+## Version 0.4 changes:
 
-- updated darknet
+- updated `image` to 0.24
 
 ## Examples
 
@@ -71,13 +71,13 @@ Before running tests:
 
 ```toml
 [dependencies]
-darknet = "0.3.2"
+darknet = "0.4"
 ```
 You can optionally enable CUDA and OpenCV features. Please read [Build with CUDA](#build-with-cuda) for more info.
 
 ```toml[dependencies]
 [dependencies]
-darknet = {version = "0.3.2", features = ["enable-cuda", "enable-opencv"] }
+darknet = {version = "0.4", features = ["enable-cuda", "enable-opencv"] }
 ```
 ### Method 2: Build with custom source
 
@@ -92,7 +92,7 @@ With `runtime` feature, darknet-sys will not compile libdarknet source code and 
 
 ```toml
 [dependencies]
-darknet = {version = "0.3.2", features = ["runtime"] }
+darknet = {version = "0.4", features = ["runtime"] }
 ```
 ### Re-generate bindings
 
@@ -100,7 +100,7 @@ With `buildtime-bindgen` feature, darknet-sys re-generates bindings from headers
 
 ```toml
 [dependencies]
-darknet = {version = "0.3.2", features = ["buildtime-bindgen"] }
+darknet = {version = "0.4", features = ["buildtime-bindgen"] }
 ```
 If you want to use your (possibly modified) header files, point `DARKNET_INCLUDE_PATH` environment variable to your header dir.
 
@@ -116,7 +116,7 @@ export CUDA_PATH=/usr/local/cuda-10.1
 
 ```toml
 [dependencies]
-darknet = {version = "0.3.2", features = ["enable-cuda", "enable-opencv"] }
+darknet = {version = "0.4", features = ["enable-cuda", "enable-opencv"] }
 ```
 You can also set `CUDA_ARCHITECTURES` which is passed to libdarknet's cmake. It defaults to `Auto`, which auto-detects GPU architecture based on card present in the system during build.
 
@@ -125,4 +125,4 @@ You can also set `CUDA_ARCHITECTURES` which is passed to libdarknet's cmake. It 
 The crate is licensed under MIT.
 
 ## Credits
-Huge thanks to [jerry73204](https://github.com/jerry73204)
+Huge thanks to all contributors!
